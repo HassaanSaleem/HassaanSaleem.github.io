@@ -1,0 +1,190 @@
+/* Syed Hassaan Saleem — personal site
+   Dark, minimal. Palette matches the "Agentic Coding" series artwork. */
+
+:root {
+  --bg: #0E1117;
+  --surface: #12161B;
+  --surface-2: #171C26;
+  --border: #232A36;
+  --border-2: #2A3140;
+  --ink: #E6E9EF;
+  --muted: #8A94A6;
+  --faint: #5A6474;
+  --warm: #FF7A59;   /* the delta */
+  --blue: #5B9CFF;   /* the loop */
+  --green: #42B883;
+  --maxw: 720px;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+/* ---- nav ---- */
+.nav {
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+  background: rgba(14, 17, 23, 0.82);
+  backdrop-filter: saturate(140%) blur(8px);
+  z-index: 10;
+}
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+.nav a.brand { font-weight: 700; color: var(--ink); text-decoration: none; letter-spacing: 0.2px; }
+.nav .links a { color: var(--muted); text-decoration: none; margin-left: 22px; font-size: 15px; }
+.nav .links a:hover { color: var(--ink); }
+
+/* ---- generic ---- */
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+strong { color: #fff; font-weight: 700; }
+em { color: var(--ink); }
+hr { border: none; border-top: 1px solid var(--border); margin: 44px 0; }
+
+section { padding: 8px 0; }
+.kicker {
+  text-transform: uppercase; letter-spacing: 3px; font-size: 12px;
+  font-weight: 700; color: var(--faint);
+}
+
+/* ---- hero ---- */
+.hero { padding: 72px 0 28px; }
+.hero h1 { font-size: 40px; line-height: 1.15; margin: 12px 0 14px; letter-spacing: -0.5px; }
+.hero .tagline { font-size: 20px; color: var(--muted); margin: 0 0 24px; max-width: 60ch; }
+.hero .bio { color: var(--ink); max-width: 62ch; }
+.contact { display: flex; flex-wrap: wrap; gap: 10px 12px; margin-top: 26px; }
+.contact a {
+  border: 1px solid var(--border-2); border-radius: 999px;
+  padding: 7px 15px; font-size: 14px; color: var(--ink);
+}
+.contact a:hover { border-color: var(--blue); text-decoration: none; }
+
+/* ---- section heads ---- */
+h2.head { font-size: 15px; text-transform: uppercase; letter-spacing: 3px; color: var(--faint);
+  font-weight: 700; margin: 52px 0 20px; }
+
+/* ---- project cards ---- */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.card {
+  border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2);
+  padding: 20px; display: block; color: var(--ink); transition: border-color .15s ease;
+}
+.card:hover { border-color: var(--border-2); text-decoration: none; }
+.card .name { font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 9px; }
+.card .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.card .desc { color: var(--muted); font-size: 15px; margin-top: 8px; }
+.card .repo { color: var(--faint); font-size: 13px; margin-top: 14px; font-family: var(--mono); }
+
+/* ---- writing list ---- */
+.post-link { display: block; padding: 20px 0; border-top: 1px solid var(--border); color: var(--ink); }
+.post-link:first-of-type { border-top: none; }
+.post-link:hover { text-decoration: none; }
+.post-link .title { font-size: 22px; font-weight: 700; }
+.post-link:hover .title { color: var(--blue); }
+.post-link .meta { color: var(--faint); font-size: 13px; margin-top: 4px; }
+.post-link .blurb { color: var(--muted); font-size: 15px; margin-top: 8px; max-width: 64ch; }
+
+/* ---- article ---- */
+article { padding: 40px 0 20px; }
+article .kicker { color: var(--warm); }
+article h1 { font-size: 34px; line-height: 1.2; letter-spacing: -0.4px; margin: 12px 0 10px; }
+article .subtitle { color: var(--muted); font-size: 19px; font-style: italic; margin: 0 0 10px; }
+article .meta { color: var(--faint); font-size: 14px; margin: 0 0 8px; }
+article h2 { font-size: 25px; margin: 46px 0 6px; letter-spacing: -0.2px; }
+article h2 .num { color: var(--faint); font-weight: 700; margin-right: 10px; }
+article p { margin: 18px 0; }
+article ul { margin: 18px 0; padding-left: 22px; }
+article li { margin: 7px 0; }
+article img { max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border);
+  display: block; margin: 28px auto; }
+article figure { margin: 28px 0; }
+article figcaption { color: var(--faint); font-size: 13px; text-align: center; margin-top: 8px; }
+
+blockquote {
+  margin: 26px 0; padding: 16px 20px; border-left: 3px solid var(--warm);
+  background: var(--surface-2); border-radius: 0 10px 10px 0; color: var(--ink);
+}
+blockquote p:first-child { margin-top: 0; }
+blockquote p:last-child { margin-bottom: 0; }
+
+.accent-warm { color: var(--warm); }
+.accent-blue { color: var(--blue); }
+
+/* ---- footer ---- */
+footer { border-top: 1px solid var(--border); margin-top: 64px; padding: 30px 0 60px; }
+footer .wrap { color: var(--faint); font-size: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+footer a { color: var(--muted); }
+
+/* ---- responsive ---- */
+@media (max-width: 640px) {
+  body { font-size: 17px; }
+  .hero h1 { font-size: 32px; }
+  .hero { padding: 48px 0 20px; }
+  .cards { grid-template-columns: 1fr; }
+  article h1 { font-size: 28px; }
+  .nav .links a { margin-left: 16px; }
+}
+
+/* ---- focus pillars ---- */
+.pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(228px, 1fr)); gap: 14px; }
+.pillar { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 18px; }
+.pillar .pt { font-weight: 700; font-size: 16px; }
+.pillar .pd { color: var(--muted); font-size: 14px; margin-top: 6px; line-height: 1.55; }
+
+/* ---- multi-card project grid ---- */
+.cards.auto { grid-template-columns: repeat(auto-fill, minmax(262px, 1fr)); }
+
+/* ---- open-source suite list ---- */
+.oss { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0 32px; }
+.oss a { display: block; padding: 13px 0; border-top: 1px solid var(--border); color: var(--ink); }
+.oss a:hover { text-decoration: none; }
+.oss .on { font-family: var(--mono); font-size: 14px; color: var(--ink); }
+.oss a:hover .on { color: var(--blue); }
+.oss .od { color: var(--muted); font-size: 13px; margin-top: 3px; line-height: 1.5; }
+
+/* ---- experience ---- */
+.exp .row { display: grid; grid-template-columns: 148px 1fr; gap: 20px; padding: 20px 0; border-top: 1px solid var(--border); }
+.exp .period { color: var(--faint); font-size: 13px; font-family: var(--mono); padding-top: 2px; }
+.exp .role { font-weight: 700; }
+.exp .rd { color: var(--muted); font-size: 15px; margin-top: 6px; line-height: 1.6; }
+
+/* ---- skills + education ---- */
+.twocol { display: grid; grid-template-columns: 1.25fr 1fr; gap: 44px; }
+.skillgroup { margin-bottom: 18px; }
+.skillgroup .sl { color: var(--faint); font-size: 12px; text-transform: uppercase; letter-spacing: 2px; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
+.tags span { border: 1px solid var(--border-2); border-radius: 6px; padding: 4px 10px; font-size: 13px; color: var(--ink); }
+.edu .item { margin-bottom: 18px; }
+.edu .deg { font-weight: 700; }
+.edu .school { color: var(--muted); font-size: 14px; }
+.edu .yr { color: var(--faint); font-size: 13px; font-family: var(--mono); margin-top: 2px; }
+
+@media (max-width: 640px) {
+  .exp .row { grid-template-columns: 1fr; gap: 5px; }
+  .twocol { grid-template-columns: 1fr; gap: 30px; }
+}
+
+/* ---- article section headers ---- */
+article h2.sec { margin: 60px 0 16px; font-size: 27px; letter-spacing: -0.3px; }
+article h2.sec .tick { display: block; width: 40px; height: 3px; border-radius: 2px; margin-bottom: 16px; }
+
+/* ---- article stat tiles ---- */
+article .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 30px 0; }
+article .stats .stat { border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); padding: 20px 14px; text-align: center; }
+article .stats .stat .n { font-size: 30px; font-weight: 800; color: var(--blue); letter-spacing: -0.5px; line-height: 1.1; }
+article .stats .stat .l { color: var(--muted); font-size: 13px; margin-top: 6px; line-height: 1.35; }
+@media (max-width: 640px) { article .stats { grid-template-columns: repeat(2, 1fr); } }

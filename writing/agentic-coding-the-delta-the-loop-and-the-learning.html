@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agentic Coding: The Delta, the Loop, and the Learning — Syed Hassaan Saleem</title>
+  <meta name="description" content="What I learned handing real software to autonomous AI agents: the spec-to-code delta, the loop that contains it, and what it means for engineers.">
+  <meta property="og:title" content="Agentic Coding: The Delta, the Loop, and the Learning">
+  <meta property="og:description" content="What I learned handing real software to autonomous AI agents.">
+  <meta property="og:type" content="article">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔁</text></svg>">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Hassaan Saleem</a>
+    <div class="links">
+      <a href="../index.html#writing">Writing</a>
+      <a href="../index.html#work">Work</a>
+      <a href="https://github.com/HassaanSaleem" rel="me">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+<article class="wrap">
+  <div class="kicker">Agentic Coding</div>
+  <h1>The Delta, the Loop, and the Learning</h1>
+  <p class="subtitle">What I learned handing real software to autonomous AI agents.</p>
+  <p class="meta">July 2026 · ~7 min read</p>
+
+  <p>AI coding has moved through four phases, each faster than the last:</p>
+  <ul>
+    <li><strong>Phase 1 — Autocomplete.</strong> The model finishes your line.</li>
+    <li><strong>Phase 2 — Chat.</strong> "Write me this function" — GitHub Copilot, the Claude Code extension.</li>
+    <li><strong>Phase 3 — Spec-Driven Development.</strong> The model builds whole features against a written specification, not a one-off prompt.</li>
+    <li><strong>Phase 4 — The Loop.</strong> The agent runs the entire cycle on its own, unattended.</li>
+  </ul>
+  <p>This is a field report from Phases 3 and 4.</p>
+
+  <p>That speed is real. Building Synapse — a production system written largely by agents — Phase 3 shipped features roughly 10× faster than Phase 2's "write me this function." Not hype, not a benchmark — just what a stretch of sustained work felt like.</p>
+
+  <h2 class="sec"><span class="tick" style="background:var(--warm)"></span>The Delta</h2>
+
+  <p>Phase 3 changes your relationship with the code. Reading it line by line was Phase 2's mode; in SDD you author the specs, the plan, and the tasks, and hand the implementation to the agent. That hand-off is what makes it fast — and it's where the trouble starts, because you stop seeing what actually gets written.</p>
+
+  <p>The trouble surfaced first as quality. Left alone, the agent would pile function on function, duplicate code instead of reusing it, and slip in monkey-patches just to get tests green — none of it obvious, because nobody was reading the diffs. Fixing it wasn't about a better model; it was about making quality something the process enforced instead of something you eyeballed. A planning-stage audit that looks for generalization first, so reuse and templating come before any new code. Clean-code and clean-architecture skills wired in as gates, with the core principles installed as a constitution the agents build against. A refactor pass every four or five cycles, so debt gets paid down on a schedule instead of compounding in the dark. That was enough to move the output from "works but ugly" to genuinely maintainable — because agents don't write clean code by default; you have to make it a gate they can't skip.</p>
+
+  <p>But quality was only the visible cost. Underneath it ran a quieter one, hidden by the same blind spot: the faster the code moved, the more it drifted from the specs meant to govern it. Call that drift what it is — <strong>defiance</strong>. Not "documentation lag," a phrase that excuses the code, but an implementation sitting in a state that contradicts the contract its spec records — a gap that has to be reconciled, not explained away.</p>
+
+  <p>It shows up in ordinary ways. A field the spec mandated that the code never wired. A decision the architecture explicitly forbade, silently reintroduced a few commits later. A doc that was true when it was written and now asserts the opposite of the running system. None of it loud. All of it accumulating.</p>
+
+  <p>That was worth pinning down properly. A real codebase, audited spec by spec, surfaces every distinct way an implementation and its specification diverge — and software engineering has been naming these failures for decades: architectural drift and erosion, software reflexion models, requirements traceability, software aging, technical debt, code clones. Every delta already had a literature behind it.</p>
+
+  <figure>
+    <img src="../assets/delta-taxonomy.png" alt="A direction-by-origin grid classifying twelve spec-to-code delta types.">
+    <figcaption>Twelve delta types, arranged by direction (which side is ahead) against origin (how the gap arose).</figcaption>
+  </figure>
+
+  <p>What came out was a taxonomy: twelve delta types on a grid of direction (which side is ahead — spec or code) against origin (how the gap arose — ignorance, deliberate choice, decay, or a defect in the spec itself). Each type comes with a way to detect it mechanically and a note on where the fix belongs — plus the one case that turns out not to be defiance at all: a deferral the spec itself sanctions. It's published, with its fifty-plus references, as an open reference anyone can cite: <a href="https://github.com/HassaanSaleem/spec-code-delta">spec-code-delta</a>.</p>
+
+  <h2 class="sec"><span class="tick" style="background:var(--blue)"></span>The Loop</h2>
+
+  <p>Cataloguing the problem is only half of it, though. Knowing the twelve ways code drifts doesn't stop it drifting — that needs a system to catch the deltas before they ever merge. And a harder question sat underneath: how much of the cycle could run with no one watching at all?</p>
+
+  <p>That became the second project: an agent that runs the whole cycle, not one prompted task at a time. I built one and called it <strong>KitchenLoop</strong>. Hand it a backlog — tasks it discovers itself, or ones you queue — and it drains it: inventing the next piece of work, building it, testing it, reviewing it, merging it, then picking up the one after. Around the clock. It comes back to a human only when it hits a genuine decision or gets stuck. It works a backlog the way a team does, except it doesn't clock out, and when it's unsure it escalates instead of guessing.</p>
+
+  <figure>
+    <img src="../assets/the-loop.png" alt="A five-stage loop — ideate, triage, execute, polish, regress — around a core of merge gates.">
+    <figcaption>The loop: ideate → triage → execute → polish → regress, unattended — every merge behind gates it can't override.</figcaption>
+  </figure>
+
+  <p>Seeded with nothing but a PRD, a technical architecture document, and a one-page constitution — no application code — it took a product from zero to one. The only human input was answering escalations.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n">~80h</div><div class="l">agent time</div></div>
+    <div class="stat"><div class="n">~40</div><div class="l">loop iterations</div></div>
+    <div class="stat"><div class="n">~150</div><div class="l">PRs it merged itself</div></div>
+    <div class="stat"><div class="n">~1,200</div><div class="l">tests passing</div></div>
+  </div>
+
+  <p>The interesting part isn't the generation. Generation is mostly solved — models are good at producing code. The hard part is <strong>trust</strong>: whether you can actually leave the thing running and rely on what it merges. And trust doesn't come from a bigger model; it comes from verification the model can't override. So every merge in KitchenLoop passes gates the agent isn't allowed to argue with — a deterministic test oracle; an external, cross-vendor code review, because no model should review its own work, and that review also flags any drift between code and spec, the same twelve types from the taxonomy; a zero-context evaluator that re-tests the sealed specification with no idea how the code was written; and drift control that pauses the whole loop when quality starts to slip.</p>
+
+  <p>The sharpest moment of the build was watching it refuse itself. A fix had been committed <em>after</em> the tests that verified it, and the merge gate rejected the merge — because the gate confirms the exact commit being merged is the one that was actually verified, not some later, unverified change. A loop that says "no" to itself is what makes it safe to walk away from.</p>
+
+  <h2 class="sec"><span class="tick" style="background:var(--green)"></span>The Learning</h2>
+
+  <p>Step back from the loop, though, because it's really a symptom of something bigger.</p>
+
+  <p>Since AI arrived, the thing that actually got commoditized isn't code, and it isn't content. It's <strong>knowledge</strong>. No access to a doctor? Describe your symptoms, get the tests worth running, take the results back, get a working theory. Car making a noise you don't like? Describe it, get a diagnosis — and, if you want, a step-by-step guide to fix it yourself. The technical barrier to almost every field short of frontier research has quietly fallen. Knowing is one prompt away.</p>
+
+  <p>Which means the scarce thing is no longer knowledge. It's <strong>dedication and execution</strong>. In any problem space the real question is whether you're willing to go technical — to treat the system yourself — or whether you'd rather stay at the abstraction and let the mechanic or the doctor handle it. Both are legitimate. But the surface layer, the low-hanging fruit in every domain, is now a commodity. The people who compound from here pair deep technical knowledge with the discipline to execute and deliver real value on top of it.</p>
+
+  <p>For software engineers specifically, this is good news. It frees up room for the part that was always hard: <strong>architecture, quality, and value</strong>. For years we offloaded "value" to product — but a non-technical PM can't audit the algorithm or the system serving users, so the gap between what shipped and what was actually valuable stayed invisible. Only the person who built a feature knows its real limits and reach. I'm not saying every engineer should become a product manager. <strong>Own the part of the product you implement, and optimize for value, not code</strong>. There are many ways to solve a problem; AI reaches for the obvious one, but only a few of them move the needle. Finding that one is research, not typing.</p>
+
+  <p>This matters most for the non-deterministic parts of a system — AI features, agent workflows — where the "right" answer is a judgment call. The deterministic layer, the platform plumbing, the AI already handles well; leave it there.</p>
+
+  <p>One honest caveat, because the debate deserves it: much of the scientific community still regards these models as content generators — next-token predictors, not real intelligence. As a description of the mechanism, that's fair. But "just predicting the next token" turns out to be remarkably effective in the right domains — software especially, where the output is structured and verifiable. An unglamorous mechanism doesn't make the leverage any less real.</p>
+
+  <p>The data backs the shape of this. Anthropic's labor-market research from early 2026 shows a wide gap between what AI can theoretically do across occupations and what it's actually used for — and the usage that does exist clusters in technical and knowledge work. Capability is well ahead of adoption. And the trend only sharpens: intelligence keeps climbing while the cost of it keeps falling. The leverage is a given now; the edge is what you point it at. (<a href="https://www.anthropic.com/research/labor-market-impacts">the research</a>)</p>
+
+  <p>Which points to a bigger question than any one engineer's job. The gloomy reading is mass unemployment. A different hypothesis seems more likely: AI doesn't erase work so much as shift it toward value delivery — the parts that need judgment, taste, and ownership.</p>
+
+  <p>A future with less work has never meant the end of society, either. The fixed eight-hour day is a recent invention; for most of history work was seasonal, task-based, and shaped by what a community actually needed. As automation reduces the human labour required, the economic scaffolding around it can evolve too — as Elon Musk and others have argued, some form of universal income may become necessary, if only because money has to keep circulating for the system to function.</p>
+
+  <p>So the real question isn't whether work disappears. It's how we redefine productivity, income, purpose, and value in an economy where the machine does more of the doing.</p>
+
+  <p>Phase 3 named the problem. Phase 4 automated the solution. <strong>The job that's left — for engineers now, and maybe the rest of us soon — is judgment.</strong></p>
+
+  <hr>
+
+  <p class="meta">The harness and the taxonomy are both open: <a href="https://github.com/HassaanSaleem/kitchenloop">kitchenloop</a> · <a href="https://github.com/HassaanSaleem/spec-code-delta">spec-code-delta</a>. Built on the Kitchen Loop framework (arXiv:2603.25697, Yannick Roy) and GitHub Spec Kit.</p>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span><a href="../index.html">← Back to home</a></span>
+    <span><a href="https://github.com/HassaanSaleem">github.com/HassaanSaleem</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
