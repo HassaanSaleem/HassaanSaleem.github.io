@@ -1,88 +1,89 @@
-# Orchestrators: Business vs Data vs AI
+# The Four Kinds of Orchestrator
 
-*Three engines in production, and the build-versus-buy judgment behind them.*
+*Orchestration is one word for four different jobs. Here is how to tell them apart before you pick a tool.*
 
-A Kestra JDBC trigger polls a Postgres queue table every one to five minutes and claims rows with `FOR UPDATE SKIP LOCKED`. A flow wakes up and runs business logic. Elsewhere in the same stack, an Airflow DAG fans out per tenant with `.expand()` on a schedule that has not moved in months. Above both, an agent decides at runtime what its own task graph should be, then executes it.
+Strip orchestration down and only three questions remain: what runs, in what order, and what happens when a step fails. The UI, the DAG renderer, the retry decorators, the alerting integrations are all decoration on those three answers.
 
-Three orchestrators. None of them interchangeable. It took building all three to understand why.
+The first two questions have similar answers everywhere. The third does not, and that is where the categories come from. A pipeline that fails by losing a day of data needs checkpointing and backfill. A workflow that fails by leaving a customer refund half-issued needs compensation and a human. A conversation that fails by producing a wrong number needs validation and a retry with different context. No single failure model serves all three without becoming so general it stops being useful.
 
-I keep a decision log because of a review I once sat in where someone proposed building an orchestrator. Not adopting one. Building one. In an event-driven microservice architecture that always sounds reasonable at first, because half of it already exists: you have a broker, you have consumers, you have retries. What's left is "just" a state machine. Somebody estimated the build. Nobody estimated the next three years.
+So the categories are not a taxonomy someone invented. They fall out of the questions.
 
-Below is the honest version of my log, across three engines I have actually run in production, plus the one I put on trial.
+## First, name your backbone
 
-## Decision 0: Know your backbone before you shop
+Before comparing tools, answer one question about the system you already have: what starts work?
 
-Every orchestrator conversation starts in the wrong place. People argue tools before they've named their backbone.
+**Event-driven**: work starts because something happened. A message lands, a webhook fires, a row changes. The system reacts. **Poll-based**: work starts because a clock said so, or because a loop looked at a queue and found something waiting. The system acts on its own schedule.
 
-Two options. Event-driven: the system reacts. Poll-based: the system acts, predictably, on a clock. Neither is superior, and anyone selling you one as universally correct is selling you something. But the backbone quietly constrains which orchestrators drop in cleanly, because an orchestrator is fundamentally an opinion about *when work starts*. Force a scheduled DAG engine onto a purely reactive system and you spend your life writing sensors. Force a reactive engine onto batch ETL and you spend your life writing fake events.
+Neither is superior, and anyone selling one as universally correct is selling you something. But the backbone constrains which orchestrators drop in cleanly, because an orchestrator is fundamentally an opinion about **when work starts**. Force a scheduled DAG engine onto a purely reactive system and you spend your life writing sensors — tasks whose only job is to wait for something that already announced itself. Force a reactive engine onto batch ETL and you spend your life writing fake events to trigger work a cron line would have started for free.
 
-![Event-driven versus poll-based: bursty, unpredictable arrivals against steady, scheduled ticks.](../assets/orch-backbone.png)
+![Event-driven arrivals are bursty and irregular; poll-based ticks are evenly spaced.](../assets/orch-backbone.png)
 
-I've run both, sometimes in the same platform. My Kestra triggers poll a claim table on an interval and sit next to cron schedules. That is poll-based logic in front of an event-shaped workload, on purpose, because a claim table is boring, observable and replayable, and a lost message is none of those. That was a judgment call, not a framework default.
+Be clear about what this question does: it narrows the tools that fit without friction. It does not pick your category. Half of all orchestrator disagreements are two people describing different backbones.
 
-## Decision 1: Airflow, where the job is blast radius
+The two can also be bridged on purpose. A common and deliberate pattern is a Kestra JDBC trigger polling a Postgres queue table every one to five minutes, running alongside ordinary cron schedules in the same engine. The claim is a transaction that selects candidate rows with `FOR UPDATE SKIP LOCKED` so concurrent pollers never collide on the same row, updates a status column, and commits. `SKIP LOCKED` is the concurrency mechanism; the status update is the claim. That is poll-based machinery wrapped around an event-shaped workload, chosen rather than inherited: a claim table is boring, observable and replayable, and a lost broker message is none of those three. When the cost of a dropped event is high and the cost of a minute of latency is low, polling a durable table beats reacting to an ephemeral message. You are trading latency for inspectability. Make that trade knowingly.
 
-The data platform runs about 28 DAGs across 13 families on CeleryExecutor: three workers, Redis as broker, Postgres as result backend.
+## The line that actually matters
 
-The parts that earned their keep were not the parts in the tutorials. Dynamic task mapping via `.expand()` gives per-tenant fan-out, so one tenant's bad payload fails its own mapped task and never blocks the other tenants' work. Watermark and per-day checkpointing makes incremental ingestion resumable, which matters when a backfill dies at hour nine. Custom pools cap concurrency so an ML training job with a 24-hour execution timeout doesn't starve the ingestion lane. MLflow covers experiment tracking and the registry, with per-tenant registered models and production alias rotation. We even ran headless Chromium inside Celery workers to render session recordings into video, which is exactly the kind of thing you only attempt on an engine you didn't write.
+The instinct is to split orchestrators into AI and not-AI. That line is wrong, and it will send you to the wrong tool. The real one is **who authors the topology, and when.**
 
-Look at what nearly all of that is: containment. Isolate failure, checkpoint progress, bound concurrency. None of it is clever code. All of it is scar tissue.
+Camunda, Airflow and Kestra all execute a graph a human wrote before the run started. Airflow's dynamic task mapping looks like a counterexample and is not. `.expand()` changes how *wide* the graph is, never what *shape* it is. Cardinality is data-determined; topology is not. Fan out to three tenants or three hundred, and you still have the same nodes in the same order with the same edges.
 
-The unglamorous part: this box is stateful by design. On-box Postgres and Redis, `prevent_destroy` on the resources. I chose that, and I pay for it in operational care.
+State the claim precisely, because there are two obvious objections. DAG files are Python evaluated at parse time, so structure can vary between parses; and `BranchPythonOperator` picks a path at run time. Both are true and neither breaks the rule: for a given run, the node set and the edges are fixed before that run begins. `.expand()` decides how many instances of an already-declared node exist. Branching selects among already-declared paths. That constraint is what lets you reason about failure. You can point at a node and say what happens when it dies, because the node existed before the run did.
 
-## Decision 2: Kestra, where state placement *is* the architecture
+A planner breaks that. Topology becomes an output of execution rather than an input to it, and every guarantee that depended on knowing the graph in advance has to be rebuilt.
 
-Then came the workflows that were data pipelines with business decisions wired through the middle. Not pure ETL. Not pure approval flow. Both.
+![A fixed forward state machine against an agent-built graph with a node added at runtime.](../assets/orch-divide.png)
 
-Twelve declarative YAML flows across four namespaces, GitOps deployed, meaning git is the source of truth and flows are upserted to the server over REST on push. Subflows with `ForEach` and a `concurrencyLimit` for per-item fan-out, parallel and sequential topologies, JDBC Postgres tasks, HTTP tasks, JS eval tasks, and native AI agent tasks calling LLMs directly inside a declarative flow. A flow-level `MAX_DURATION` SLA as the backstop against hung runs, because something always hangs eventually.
+AI is incidental to the line. You can build an entirely LLM-powered system whose graph is fixed in YAML, and it belongs on the declared-topology side. You could build a non-AI planner that emits task graphs from a solver, and it belongs on the other.
 
-The deliberate inversion from Airflow: this deployment is stateless by design. All state pushed off-box to managed Postgres and S3, so the compute node is disposable. Two orchestrators, two opposite storage verdicts, both correct for their workload. Same word, "orchestrator". Completely different operational contract.
+## The four categories
 
-![The three engines in production: Airflow for data and ML, Kestra for the business-plus-data seam, LangChain for the agentic layer.](../assets/orch-in-production.png)
+**Business process.** The unit of work is a business process, and the hard part is time and people. A refund approval idles for three days waiting on a human. The failure mode is not a crash; it is a process stranded halfway through with real-world side effects already committed. The test is sharper than "human in the loop." Not *does a human start the run*. Not *does a human read the output*. Does the run **suspend mid-execution, wait on a person for days, and resume where it left off**? Data tools model that badly — not because a sleeping task holds a worker slot (deferrable operators and reschedule-mode sensors exist precisely to free it) but because task inboxes, assignment, escalation, multi-week durable state, and an audit trail a compliance team reads are not primitives they have. Compensation rather than retry is the failure response. BPMN engines like Camunda live here, and so do finance back offices.
 
-## The map, compressed
+**Data ETL/ELT.** The unit of work is a dataset. Steps are idempotent and re-runnable, so failure is survivable as long as one bad input does not take down everything else. The hard part is blast radius. Consider a platform running roughly 28 DAGs across 13 families on CeleryExecutor with three workers, Redis as broker, Postgres as result backend. The parts that earn their keep are not the tutorial parts. Dynamic task mapping via `.expand()` gives per-tenant fan-out, so one tenant's bad payload fails its own mapped task and never blocks other tenants' work. Watermark and per-day checkpointing makes incremental ingestion resumable, which is what matters when a backfill dies at hour nine. Custom pools cap concurrency so an ML training job with a 24-hour execution timeout cannot starve the ingestion lane. Nearly all of it is containment: isolate failure, checkpoint progress, bound concurrency. None of it is clever code. It is the accumulated shape of things that went wrong once, and it is the actual reason to adopt a mature data orchestrator rather than write one. Ask what the blast radius of one bad record is. If the honest answer is "the whole run," you need containment primitives, not a better DSL.
 
-| Domain | Tool | Who authors the topology |
-|---|---|---|
-| Business workflows | Camunda | Human, ahead of execution |
-| Data ETL/ELT | Airflow | Human, ahead of execution |
-| Business + data hybrid | Kestra | Human, ahead of execution |
-| Agentic | LangChain / LangGraph | Human declares nodes; a planner can emit the graph mid-run |
+**Business plus data hybrid.** Not pure ETL, not pure approval flow. Data pipelines with business decisions wired through the middle. A representative Kestra deployment runs a dozen declarative YAML flows across four namespaces, GitOps deployed — git is the source of truth and flows are upserted to the server over REST on push. Subflows with `ForEach` and a `concurrencyLimit` handle per-item fan-out. JDBC Postgres tasks, HTTP tasks, JS eval tasks and native AI agent tasks calling LLMs sit inside the same declarative flow. A flow-level `MAX_DURATION` SLA backstops hung runs, because something eventually hangs.
 
-What that table hides is how differently these want to be operated, and one boundary I should mark: Camunda is the row I have read and evaluated rather than run. It owns atomic, long-running, human-in-the-loop work with a detached or bring-your-own runtime, which is why finance back offices live there.
+Note that these last two reach opposite conclusions about state and both are right. An Airflow cluster of that kind is typically stateful by design: on-box Postgres and Redis, `prevent_destroy` on the resources, paid for in operational care. A Kestra deployment can invert it — stateless by design, all state pushed off-box to managed Postgres and S3, so the compute node is disposable. Running a stateful engine on ephemeral infrastructure, or a stateless one with local-disk assumptions, produces failures that look like bugs and are actually mismatches. Evaluate the contract, not the noun.
 
-![Four domains, four right answers: Camunda, Airflow, Kestra, LangChain.](../assets/orch-map.png)
+**Agentic.** If deciding what to do next is itself part of the work, no author can write the graph in advance. LangChain and LangGraph serve this case.
 
-The structural line that actually matters isn't AI versus not-AI. It's *who authors the topology, and when*. Camunda, Airflow and Kestra all take a graph a human wrote ahead of execution. Airflow's dynamic task mapping is not a counterexample: `.expand()` changes how **wide** the graph is, never what **shape** it is. Cardinality is data-determined; topology is not. That constraint is a feature, because it's why you can reason about failure.
+| Domain | Typical tool | Who authors the topology | You are here if |
+|---|---|---|---|
+| Business process | Camunda | Human, ahead of the run | The run suspends for days on a person; failure means undo, not retry |
+| Data ETL/ELT | Airflow | Human, ahead of the run | Scheduled DAGs and backfills; the question is blast radius |
+| Business + data hybrid | Kestra | Human, ahead of the run | A pipeline that needs business decisions wired through its middle |
+| Agentic | LangChain / LangGraph | Human declares nodes; a planner may emit the graph mid-run | The steps cannot be enumerated before the request arrives |
 
-A planner changes the shape. The topology becomes an output, not an input.
+![Four domains and the orchestrator each one calls for.](../assets/orch-map.png)
 
-![Fixed forward state machine versus an agent-built graph.](../assets/orch-divide.png)
+## The selection sequence
 
-## Decision 3: the one I built anyway
+0. **What starts work — an event or a clock?** Answer honestly, not aspirationally. This constrains which tools fit; it does not pick the category.
+1. **Can you draw the graph before the run starts?** If no, you are agentic, and you should expect to own more. No amount of dynamic mapping will save you. If yes, continue.
+2. **Does a run suspend and wait on a person for days, then resume?** If yes, business process engine.
+3. **When a step fails, is the correct response to retry it, or to undo what already happened?** Retry points at data engines. Undo points at BPMN.
+4. **Pure data movement, or data plus business decisions mid-pipeline?** The first points at Airflow, the second at a hybrid engine like Kestra.
+5. **Can the compute node die?** Stateful-by-design and stateless-by-design are both valid. Choosing one accidentally is not.
 
-The agentic layer is a custom multi-stage orchestrator on LangChain, six stages: validate and classify intent, plan a task DAG, select a model or agent per task, execute, respond, validate. Every stage handler is an LCEL chain, a `PromptTemplate` piped into a runnable LLM on `langchain-aws` ChatBedrock. Execution runs the generated graph through a Kahn topological sort into dependency batches, concurrent under an `asyncio.Semaphore`. An agent-as-provider factory routes each task to a specialized agent: a pandas data analyst, a web research agent with search and scraper tools, a conversational agent, a qualitative narrative agent, or straight to a data API. Pipeline state checkpoints per stage to Postgres, so a session can short-circuit and resume mid-pipeline. State trees are recursive, because an analysis can spawn child analyses.
+## Build versus buy
 
-Note the layering, because the evaluation depends on it: LCEL is a composition library and it composes my stage handlers. The orchestration runtime is mine. Those are different jobs, and conflating them is how people end up comparing the wrong things.
+Start by separating two things that get conflated constantly. LCEL is a composition library. It composes handlers — a `PromptTemplate` piped into a runnable model is composition. A system can use LCEL for every stage handler and still need a separate runtime to sequence stages, checkpoint them, and recover. Comparing a composition library to an orchestrator is comparing a function-call convention to a scheduler.
 
-Then I put it on trial, because building your own orchestrator is the most seductive mistake in this industry and I wanted to know whether I had made it.
+The difference is visible in what a run-time-authored system actually contains. A multi-stage agentic orchestrator typically decomposes into stages — validate and classify intent, plan a task DAG, select a model or agent per task, execute, respond, validate — where each stage handler may be an LCEL chain. The orchestration is everything around that. Execution runs the *generated* graph through a Kahn topological sort into dependency batches, concurrent under an `asyncio.Semaphore`, with a factory routing each task to a specialized agent. Pipeline state checkpoints per stage to Postgres so a session can resume mid-pipeline. State trees are recursive, because one analysis can spawn child analyses. Nothing in that topology existed before the run.
 
-**Mastra: Do Not Migrate.** Full language rewrite risk, and the pandas analyst agent was a hard blocker in JS. Framework immaturity on top.
+Building your own is defensible only for a capability **combination** you cannot get without rebuilding around someone else's state model: a topology generated mid-run from intermediate results, **and** recursive state trees where one analysis spawns children. Either alone is buyable. Only both together clear the bar.
 
-**LangGraph: Selective Adoption Only, Do Not Full Rewrite.** It is a genuinely good piece of engineering, and it solved no problem I actually had. The system was production-stable, with 178 tests and 95% coverage standing behind any change I needed to make. Adopt patterns, not a rewrite.
+LangGraph is the honest test, and understating it weakens the argument. Conditional edges route at run time. `Send` fans out at run time. `Command(goto=...)` redirects at run time. Checkpointers resume from a node and subgraphs nest. What it does not do is let a planner invent nodes that were never declared — the same width-not-shape invariant as `.expand()`, one layer up. That is the gap, and it is exactly why the category line is about authorship rather than about AI.
 
-Note what I did not conclude. I did not conclude "always buy." The custom system survived review because of a combination I could not get cleanly without rebuilding around someone else's state model: a topology generated mid-run from intermediate results, plus recursive state trees where one analysis spawns children. LangGraph checkpointers resume from a node and subgraphs nest; what LangGraph does not do is let the planner invent nodes that were never declared. That is the whole reason it solved nothing for me, and it's also why the category line is about authorship rather than about AI.
+Two rules for migration evaluations generally. "Good engineering" is not a reason to migrate; a framework that solves no problem your system actually has is a rewrite with no numerator. And cross-language rewrites carry blockers that framework maturity does not offset — a pandas-based analyst agent has no clean JavaScript equivalent, and that alone can end an evaluation. The question is never "is this tool good." It is "does this tool solve a problem this system actually has."
 
-That is a real answer to "why are we building this," and it is the only acceptable one. Know exactly why you are building, then re-examine that reason honestly, on a schedule, fully willing to lose the argument.
+Assume buy. Make build clear the bar: name the specific capability combination that forces it, then check that a fixed-topology engine truly cannot express it.
 
-## What the log is actually for
+The economics push the same way. In event-driven microservice architectures the build case sounds especially reasonable, because half the machinery already exists — a broker, consumers, retries. What is left is "just" a state machine. The estimate covers the build. It never covers the next three years. Build cost was never the expensive part; maintenance, scalability and reliability are. AI writes the code now. It does not carry the pager.
 
-Every tool above is open source. The knowledge is free. Only the reinvention is expensive. Most build-versus-buy calls go wrong long before anyone compares anything, because nobody in the room knows what already exists.
-
-Technical depth is mastery of *how*. Can you build the machine? Implementation, algorithms, the craft of construction. For decades that was the whole game and the primary differentiator. AI made it abundant and cheap. Cognitive depth is mastery of *what* and *why*. Which tool fits this workload, what ownership costs in year three, what breaks at 10x, when not to build at all. It's knowing the shape of a problem well enough to recognize which already-solved problem it is.
+Every tool named here is open source. The knowledge is free; only the reinvention is expensive. Most build-versus-buy calls go wrong long before anyone compares anything, because nobody in the room knows what already exists.
 
 ![Technical depth is mastery of how; cognitive depth is mastery of what and why.](../assets/orch-depth.png)
 
-AI collapsed the cost of building. It did not collapse the cost of owning.
-
-So if you're reaching for a custom orchestrator this quarter, the first question isn't whether you can build it. It's whether you'd still choose to own it now that the code writes itself for free.
+Technical depth is mastery of *how*: implementation, algorithms, the craft of construction. Cognitive depth is mastery of *what* and *why*: which tool fits this workload, what ownership costs in year three, what breaks at 10x, when not to build at all. It is knowing the shape of a problem well enough to recognize which already-solved problem it is. AI collapsed the cost of building. It did not collapse the cost of owning.

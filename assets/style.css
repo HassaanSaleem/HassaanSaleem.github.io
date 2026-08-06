@@ -192,32 +192,39 @@ article .stats .stat .l { color: var(--muted); font-size: 13px; margin-top: 6px;
 /* ---- article tables + inline code ---------------------------------- */
 article table {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   margin: 28px 0;
-  font-size: 15px;
-  display: block;
-  overflow-x: auto;
+  font-size: 14.5px;
+  table-layout: fixed;
 }
 article thead th {
   text-align: left;
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 11.5px;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--faint);
   font-weight: 700;
-  padding: 0 16px 10px 0;
+  padding: 0 14px 10px 0;
   border-bottom: 1px solid var(--border-2);
-  white-space: nowrap;
+  vertical-align: bottom;
+  overflow-wrap: break-word;
 }
 article tbody td {
-  padding: 12px 16px 12px 0;
+  padding: 13px 14px 13px 0;
   border-bottom: 1px solid var(--border);
   color: var(--muted);
   vertical-align: top;
+  line-height: 1.45;
+  overflow-wrap: break-word;
 }
 article tbody tr:last-child td { border-bottom: 0; }
-article tbody td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
-article tbody td:nth-child(2) { color: var(--ink); white-space: nowrap; }
+article tbody td:first-child { color: var(--ink); font-weight: 600; }
+article tbody td:nth-child(2) { color: var(--ink); }
+@media (max-width: 620px) {
+  article table { font-size: 13.5px; }
+  article thead th, article tbody td { padding-right: 10px; }
+}
 
 article code {
   font-family: var(--mono);
