@@ -1,44 +1,28 @@
 # Orchestrators: Business, Data and AI
 
-### Four engines, one question nobody asks, and why "we'll just build it" got cheaper and more expensive at the same time
+### Four engines, one question nobody asks, and how to tell which orchestrator your problem actually needs
 
 *Hassaan · Disrupt · August 2026*
 
 ---
 
-## The sentence that starts every bad architecture
+Orchestration is one of the most misunderstood topics in engineering — not the hardest, the most misunderstood. And AI has only raised the stakes: someone now has to coordinate the agents everyone is suddenly building.
 
 I have heard the same sentence in more design reviews than I can count.
 
 > "We already have a queue, a worker and a retry. What's left is basically a state machine."
 
-And the estimate attached to it is usually right. A competent team really can write that state machine in a sprint. I've nodded along in the room, done the mental math, and agreed it was a week of work. It often was.
+And the estimate attached to it is usually right. A competent team really can write that state machine in a sprint, and the room agrees it's a week of work.
 
 The estimate isn't the problem. The problem is what it quietly leaves out — because a state machine is cheap to *write* and expensive to *own*, and the sprint estimate only ever prices the writing.
 
-Orchestration is one of the most misunderstood topics in engineering. Not the hardest — the most misunderstood. I've watched two good engineers argue about tools for an hour before realising they were describing two completely different problems, and then watched them go build the engine themselves anyway, because AI made writing the code free.
+I've watched two good engineers argue tools for an hour before realising they were describing different problems — then go build the engine themselves anyway, because AI made the code free to write. Everything that happens *after* the code did not.
 
-Writing the code did get free. Everything that happens *after* the code did not.
+So let me be literal, because the marketing never is. **An orchestrator is a runtime that manages a runtime.** You have work that happens in steps, and if you can describe those steps — state machine, graph, checklist, whatever you call it — the orchestrator owns that graph and does three jobs with it. It *executes*: the right steps, in the right order, in the right place. It *manages*: retries failures, holds state between steps, resumes after a crash, bounds how much runs at once. And it *governs*: shows you what ran, what it produced, who approved it, and what broke.
 
-What follows is a plain-language walk through what an orchestrator actually is, the four kinds that exist, how to tell which one your problem needs, and why the honest answer is almost always to adopt one rather than build it. No prior knowledge needed. I'll be literal about all of it.
+That third job is the one people forget, and it's the reason orchestrators exist as products instead of as a file in your repo. Executing steps is easy. Executing steps *and still being able to answer questions about a run that happened three weeks ago* is not. Hold onto that — it's exactly the part the sprint estimate leaves out.
 
-## Part 1: What an orchestrator actually is
-
-Strip off the marketing and it comes down to one sentence.
-
-**An orchestrator is a runtime that manages a runtime.**
-
-You have work. The work happens in steps. If you can describe your logic as a sequence of steps — call it a state machine, a graph, a checklist, whatever word you like — then an orchestrator is the thing that owns that graph and does three jobs with it.
-
-It *executes* — runs the steps in the right order, in the right place. It *manages* — retries what failed, holds state between steps, resumes after a crash, bounds how much runs at once. And it *governs* — shows you what ran, what it produced, who approved it, and what happened when it broke.
-
-That third job is the one people forget, and it's the reason orchestrators exist as products rather than as a file in your repo. Executing steps is easy. Executing steps *and still being able to answer questions about a run that happened three weeks ago* is not. Hold onto that, because it's the part the sprint estimate never includes.
-
-Here is the thing that surprised me when it finally clicked: all four categories below do exactly those three jobs. They agree on almost everything. What they disagree about is narrow — and that narrow disagreement is the whole article.
-
-## Part 2: There are four kinds, and they don't substitute for each other
-
-Choosing an orchestrator isn't choosing a tool. It's choosing a category. Get the category wrong and no amount of configuration digs you out.
+Here's what surprised me when it clicked: every kind of orchestrator does those same three jobs. They agree on almost everything. What they disagree about is narrow — and that narrow disagreement is the whole article. Because choosing one isn't choosing a tool; it's choosing a *category*, and there are four. Get the category wrong and no amount of configuration digs you out.
 
 | Category         | Engine                | The unit of work                | The hard part               |
 | ---------------- | --------------------- | ------------------------------- | --------------------------- |
@@ -49,21 +33,19 @@ Choosing an orchestrator isn't choosing a tool. It's choosing a category. Get th
 
 One honest note before those names carry any weight: each engine in the table is simply one I've worked with, not the only one that fits its row. There are many alternatives in every category — Temporal, Prefect, Dagster, n8n and CrewAI among them — and I'm naming specific tools only to make each category concrete, not to recommend one over its rivals.
 
-Before any of those names mean anything, I want to hand you three pictures, because they carry all the way down and they're easier to remember than the table.
+Before the names mean anything, though, I want to hand you three pictures, because they're easier to hold than the table and they carry all the way down.
 
-Data work is a **conveyor belt**. Same stations, same order, every single night. When there's more to process you make the belt wider — but the stations don't move and the order doesn't change.
+Data work is a **conveyor belt**. Same stations, same order, every single night. When there's more to process you widen the belt — but the stations don't move and the order doesn't change.
 
 Business process is a **case file**. It moves from desk to desk, and sometimes it just sits in someone's inbox over a long weekend, waiting for a person who isn't in yet.
 
-Agentic work is a **detective**. There's no case plan on day one. What comes back from the third interview is what decides whether there's a fourth one at all.
+Agentic work is a **detective**. There's no case plan on day one. What comes back from the third interview decides whether there's a fourth one at all.
 
-Note those three, because the mismatch runs both ways. Put a detective on a conveyor belt and the process is no longer deterministic — he stops to reason out every item that comes past, when a belt only works if every item gets treated the same. Once you've seen the shapes, you'll notice that most orchestration arguments are exactly that mistake, dressed up as a preference between tools.
-
-![Four domains and the orchestrator each one calls for.](../assets/orch-map.png)
+Hold those three, because the shapes don't swap. Put a detective on a conveyor belt and the process stops being deterministic — he stops to reason about every item that comes past, but a belt only works if each one is treated the same. Run it the other way, clamp a fixed belt over detective work, and you've demanded the case be solved before the first interview is even done.
 
 ---
 
-## Part 3: Business process — the case file
+## Business process — the case file
 
 The unit of work here is one process. One refund. One onboarding. One insurance claim.
 
@@ -71,23 +53,23 @@ And the hard part isn't compute. It's time, and people.
 
 There's one question that identifies this category cleanly: *does a run suspend in the middle, wait on a human for three days, and then pick up exactly where it left off?* If yes, you're here.
 
-One thing that looks identical and isn't: an agent that drafts a plan and pauses for you to approve it. That waits on a human too — but there the human is signing off on a plan the run just invented, while here they approve a step that was drawn into the process long before the run started. Remove the human from both and the difference shows: the business process still has a graph you can read in advance, and the agent still has to go invent one. Same pause, opposite authorship.
+A pause for a person isn't quite the whole test, though — an agent can wait on a human too, to approve a plan or clear an action mid-run. What settles it is whether the workflow is deterministic. In a business process the graph is fixed before the run starts, and the human is a required input at a known step. In an agent the graph is generated as the run goes, so the pause sits inside a shape the run is still inventing.
 
-Picture the refund approval sitting in someone's inbox over that long weekend. Nothing is running. Nothing has crashed. The process is simply *paused*, halfway through, with real-world side effects already committed — money moved, an email sent, a record changed at a partner you don't control. That's the failure mode that defines the category: not a crash, but a process stranded halfway with consequences already out the door.
+Picture the refund approval sitting in someone's inbox over that long weekend. Nothing is running. Nothing has crashed. The process is simply *paused*, halfway through, with real-world side effects already committed — money moved, an email sent, a record changed at a partner you don't control. That's the failure mode that defines the category — not a crash, but a pause you can't take back.
 
-Which changes how you think about failure. You do not retry a refund you already issued — you reverse it. BPMN, the modelling language Camunda runs on, has this built in as a first-class idea: compensation, not retry. It's there because the people who designed BPMN were modelling banks and insurers, not batch jobs. When a step can't just be run again, the graph needs a way to *undo* the steps that already happened, and that has to be part of the language, not something you bolt on later.
+Which changes how you think about failure. You do not retry a refund you already issued — you reverse it. BPMN, the modelling language Camunda runs on, has this built in as a first-class idea: compensation, not retry. It's there because the people who designed BPMN were modelling banks and insurers, not batch jobs. When a step can't just be run again, undoing has to be part of the language, not something you bolt on later.
 
-Camunda adds one more choice that matters enormously in regulated work: you decide where the engine itself lives. Run it as a shared remote cluster, self-manage it inside your own boundary so the process state never leaves your walls, or do both at once — a managed control plane with the task execution pinned in your environment, which Zeebe, its underlying engine, supports through custom runtimes for the specific tasks that have to run on your side of the line. That sounds like a footnote until you're in a room where a process is *legally required* to be auditable and a human signature is a genuine node in the graph. Then it's the whole reason the tool is on the shortlist — and it's why Camunda's public case studies read like a roster of banks, insurers, telcos and government bodies.
+Camunda adds one more choice that matters enormously in regulated work: you decide where the engine lives. Run it as a shared remote cluster, or self-manage it inside your own boundary so the process state never leaves your walls. Or both — a managed control plane, with the actual tasks pinned in your own environment. Its underlying engine, Zeebe, is built for exactly that split: custom runtimes keep the steps that have to run on your side of the line right there. That sounds like a footnote until you're in a room where a process is *legally required* to be auditable and a human signature is a real node in the graph. Then it's the whole reason the tool is on the shortlist — and it's why Camunda's case studies read like a roster of banks, insurers, telcos and government bodies.
 
 The tell here is easy to catch. If someone describing the flow says "and then it waits for approval," and that wait can last days, and a human is the reason — you're in business process. Stop shopping in the data aisle.
 
 ---
 
-## Part 4: Data — the conveyor belt
+## Data — the conveyor belt
 
 The unit of work is a dataset. And the hard part is blast radius: one bad input must not take down the other forty.
 
-This is the category everyone already knows, because it's the one with a default answer — Airflow, usually sitting next to a model registry for the ML side and dbt or stored procedures for the transformations. But run enough of it in production and you learn that you weren't really paying for the scheduler. You were paying for three primitives that only reveal their worth on a bad night.
+This is the category everyone already knows, because it's the one with a default answer — Airflow, usually next to a model registry for the ML side and dbt or stored procedures for the transformations. But run enough of it in production and you learn you weren't paying for the scheduler. You were paying for three primitives that only show their worth on a bad night.
 
 The first is **dynamic task mapping**. One task declaration fans out at run time into one task per tenant. A single tenant ships a malformed payload, that one tenant's task fails, and every other tenant finishes clean. Write it yourself as a loop instead, and the loop dies on the first bad row and takes the good rows down with it.
 
@@ -97,19 +79,19 @@ The third is **pools** — a pool is just a semaphore with a name. Give heavy re
 
 Look at those three together and you can name what they actually are: *containment*. Isolate failure, checkpoint progress, bound concurrency. None of it is clever code. It's the accumulated shape of things that went wrong once, to somebody else, years ago, and got fixed upstream so you'd never have to have that outage yourself. That's the real product.
 
-There's a second rule this category teaches, usually late and usually the hard way: push the compute *down*. If the data is too big to sit comfortably in process memory, the orchestrator has no business holding it. Move the logic to where the data already lives — dbt models, stored procedures, warehouse SQL — and let the orchestrator move pointers instead of payloads.
+Containment has a companion lesson, learned later and usually the hard way: push the compute *down*. If the data is too big to sit comfortably in process memory, the orchestrator has no business holding it. Move the logic to where the data already lives — dbt models, stored procedures, warehouse SQL — and let the orchestrator move pointers instead of payloads.
 
 So when you adopt something like Airflow, you're not really buying features. You're buying other people's outages, already survived.
 
 ---
 
-## Part 5: Business plus data — the belt with a stamp in the middle
+## Business plus data — the belt with a stamp in the middle
 
 Then there's the awkward middle, and it turns out to be more common than either pure case: pipelines that are mostly data movement but have real business decisions wired through them. Not clean ETL. Not a clean approval flow. Something in between that neither aisle quite fits.
 
-Kestra is built for that seam, and its real differentiator isn't a feature you can point at on a comparison table — it's *authorship*. The flows are declarative YAML, which means the person who understands the business rule can write the flow without also being the person who understands the runtime. That sounds small. It's the whole thing. It's the difference between the analyst waiting two sprints for an engineer and the analyst shipping the flow herself on a Tuesday.
+Kestra is built for that seam, and its real differentiator isn't a feature you can point at on a comparison table — it's *authorship*. The flows are declarative YAML, which means the person who understands the business rule can write the flow without also being the person who understands the runtime. Which is the whole thing: the difference between the analyst waiting two sprints for an engineer and the analyst shipping the flow herself on a Tuesday.
 
-The pipelines in this category tend to keep one signature shape, and once you see it you see it everywhere:
+Set authorship aside for a moment and look at the pipelines themselves — they tend to keep one signature shape, and once you see it you see it everywhere:
 
 **Data in. An agent in the middle. A process out the other side.**
 
@@ -117,11 +99,11 @@ Let me put that shape on a concrete job. Take a retailer selling across three ma
 
 The first stretch of the flow is pure data work — pull the new reviews from each marketplace, match each one to the product it belongs to, line them all up. Plain tasks, no intelligence involved. Fetching and matching is *transport*, and transport doesn't need judgment.
 
-Then the agent takes its turn, and it gets exactly one job: read each review and decide what it's actually saying. "The zipper broke in a week" is a defect. "Runs small, order a size up" is a sizing issue. "Arrived late" is a delivery complaint — about the courier, not the product. Telling those three apart is genuine judgment, the one step in the whole flow that code can't do reliably. So that's the step the model gets, and it's the *only* step the model gets. Models for judgment, never for transport.
+Then the agent takes its turn, and it gets exactly one job: read each review and decide what it's actually saying. "The zipper broke in a week" is a defect. "Runs small, order a size up" is a sizing issue. "Arrived late" is a delivery complaint — about the courier, not the product. Telling those three apart is genuine judgment, the one step in the whole flow that code can't do reliably. So that's the one step the model gets — judgment, and only judgment.
 
 Everything after that decision is process, and process runs on business rules, not on model output. Defect reports open a case with the supplier. Sizing complaints — once enough of them agree — update the product page. Delivery complaints route to logistics, not to the product team. And a product a category manager has flagged for manual handling skips the automation entirely, no matter what the model concluded about it.
 
-And notice who owns those rules. "Once enough of them agree" is a number someone has to choose — five reviews, or eight — and the person who should choose it is the category manager, not an engineer. Thresholds move, categories get added, routing changes; these are business decisions, tuned constantly by the people who own the outcome. That is the real reason the awkward middle resists a pure-code tool. Write this as an Airflow DAG and every one of those parameters lives in Python — and an AI writing that DAG for you doesn't change it, because the parameters still sit in code a subject-matter expert can't reach or test. So each tweak becomes a developer ticket and a deploy, and the person who actually understands the decision can't even try a change on their own. The hybrid tools earn their place by handing that person a gateway to the decision instead of gatekeeping it behind code.
+And notice who owns those rules. "Once enough agree" is a number someone has to choose — five reviews, or eight — and that someone is the category manager, not an engineer. Thresholds move, categories get added, routing changes: business decisions, tuned constantly by the people who own the outcome. That's the real reason the awkward middle resists a pure-code tool. Write it as an Airflow DAG and every parameter lives in Python. Letting an AI write that DAG doesn't help either — the parameters still sit in code, where a subject-matter expert can't reach or test them. Each tweak becomes a developer ticket and a deploy. The hybrid tools earn their place by handing that person a knob she can turn herself, instead of locking it behind code.
 
 The run fans out over the products a few at a time, each one allowed to fail on its own — one marketplace's API going down at midnight must not strand the other two. And notice that the agent's verdict is treated as a *proposal*, never as an action. The flow decides what happens. The agent only decides what's true.
 
@@ -129,83 +111,40 @@ The tell here: the flow has a model call, a database write and a decision step a
 
 ---
 
-## Part 6: Agentic — the detective
+## Agentic — the detective
 
-Now the category that breaks the pattern the other three share.
+Now the detective — the one category that breaks the pattern the other three share.
 
 In the first three, a human wrote the graph before the run ever started. Here, the graph is an *output* of the run, not an input to it. Nobody drew it in advance because nobody could — the shape of the work only becomes knowable once the work is underway.
 
 The typical build looks reasonable enough on paper. A stage that validates and classifies the incoming request. A stage that plans a task graph. A stage that assigns a model or a specialist agent to each task. Then execute, respond, validate. Each of those stage handlers is a composed chain — a prompt template piped into a model call.
 
-The interesting part is what happens next. The graph the planner produced gets topologically sorted into dependency batches and run concurrently under a bounded semaphore, with a factory routing each task to whichever specialist fits — a data analyst, a web researcher with search and scraper tools, a conversational agent, or sometimes just a straight read against an API. State checkpoints after every stage so a session can resume from the middle. And the state trees are recursive, because one analysis is allowed to spawn child analyses of its own.
+One clarification, because it wastes a lot of people's time right here: LCEL — the LangChain composition syntax — is a composition library. It composes handlers. You can use it for every stage and still need a separate runtime to sequence those stages, checkpoint them, and recover them when they break. Comparing it to an orchestrator is comparing a function-call convention to a scheduler — not the same layer. Conflating them is how people end up convinced they already have an orchestrator when what they have is a nicer way to write functions.
 
-Read that list back, because it's the actual lesson of this whole part: *none of it is a feature you were handed.* Checkpointing, the concurrency bound, resume semantics, per-task isolation — in Parts 4 and 5 every one of those came in the box. Here you write all of them yourself. The moment the topology stopped being knowable in advance, every guarantee that quietly depended on knowing the topology had to be rebuilt by hand. That's the real price of admission — not the model calls, which are the easy part, but the plumbing you stop getting for free.
+That separate runtime is where it gets interesting. The graph the planner produced gets topologically sorted into dependency batches, then run concurrently under a bounded semaphore. A factory routes each task to whichever specialist fits — a data analyst, a web researcher with search and scraper tools, a conversational agent, or sometimes just a straight read against an API. State checkpoints after every stage so a session can resume from the middle. And the state trees are recursive, because one analysis can spawn child analyses of its own.
 
-One clarification, because it wastes a lot of people's time in exactly this spot: LCEL — the LangChain composition syntax — is a composition library. It composes handlers. A system can use it for every single stage and still need a separate runtime to sequence those stages, checkpoint them, and recover them when they break. Comparing a composition library to an orchestrator is comparing a function-call convention to a scheduler. They're not the same layer, and conflating them is how people end up convinced they've already got an orchestrator when what they've got is a nicer way to write functions.
+Read that list back, because it's the lesson of this whole part: *none of it is a feature you were handed.* Checkpointing, the concurrency bound, resume semantics, per-task isolation — in the data and hybrid categories every one came in the box. Here you write all of them yourself. The moment the topology stopped being knowable in advance, every guarantee that depended on knowing it had to be rebuilt by hand. That's the real price of admission — not the model calls, which are the easy part, but the plumbing you stop getting for free.
 
----
-
-## Part 7: The two questions that sort the whole field
-
-Before any tool shortlist, two questions do the real sorting. Neither of them appears on a comparison table, which is a large part of why comparison tables lead people astray.
-
-**The first: who writes the graph?** Declared means a human wrote the topology before the run started. Generated means something produced the topology during the run. Camunda, Airflow and Kestra all sit on the declared side, and that one shared property matters more than every feature they *don't* share.
+Zoom out from the plumbing, though, because the detective is really here to reveal the line that sorts the entire field — and it's not on any comparison table. It's a single question: **who writes the graph?** Camunda, Airflow and Kestra all sit on the declared side, and that one shared property outweighs every feature they don't share.
 
 Dynamic fan-out looks like the counterexample, and it isn't. Fanning out changes how *wide* the graph is, never what *shape* it is — three tenants or three hundred, it's the same nodes and the same edges, just more copies of them. Even LangGraph at its most capable — conditional edges, runtime fan-out, checkpointed resume — never lets a planner invent a node that wasn't declared somewhere. The moment you compile a fresh graph mid-run from intermediate results, *you* have become the planner, and every guarantee past that boundary is yours to write.
 
-That declared constraint isn't bookkeeping. It's the thing that lets you reason about failure at all. You can point at a node and say what happens when it dies, precisely because the node existed before the run did. Alerting, ownership, runbooks — all of it quietly assumes a graph you can read while nothing is running. Take that assumption away and you don't just lose a diagram; you lose the ability to answer "what breaks if this step fails" before it fails.
+That declared constraint isn't bookkeeping. It's what lets you reason about failure at all. You can point at a node and say what happens when it dies, precisely because the node existed before the run did. Alerting, ownership, runbooks — all of it quietly assumes a graph you can read while nothing is running. Take that away and you don't just lose a diagram; you lose the ability to answer "what breaks if this step fails" before it fails.
 
-And notice the line is about authorship, not about AI. A flow that is fully LLM-powered but fixed in YAML is declared. A solver with no AI in it anywhere that emits fresh graphs is generated. It was never AI-versus-not-AI. It was always who-holds-the-pen.
-
-![A fixed forward state machine against an agent-built graph with a node added at runtime.](../assets/orch-divide.png)
-
-**The second: how does work start?** Event-driven, because something happened. Or poll-based, because a clock ticked, or a loop went looking and found something waiting. Neither is better than the other — but an orchestrator is, at its core, an opinion about when work starts, and that opinion has to match the system it lands in.
-
-Force a scheduled DAG engine onto a reactive system and you'll spend your life writing sensors — tasks whose entire job is to sit and wait for something that already announced itself the moment it happened. Force a reactive engine onto batch ETL and you'll find yourself manufacturing fake events just to trigger work that a single cron line would have started for free. Neither is a bug in the tool. Both are a mismatch between the tool's opinion and the system's reality. The two backbones can even bridge on purpose — the app writes a row, the engine polls and claims it — trading a little latency for a queue you can inspect and replay. But you want to bridge them deliberately, not discover halfway through that you accidentally married a poller to an event stream.
-
-![Event-driven arrivals are bursty and irregular; poll-based ticks are evenly spaced.](../assets/orch-backbone.png)
-
-Roughly half the orchestrator disagreements I've sat through were two people describing different backbones and sincerely believing they were arguing about tools.
+And notice what the line actually tracks. A flow that is fully LLM-powered but fixed in YAML is declared. A solver that emits fresh graphs — with no AI in it anywhere — is generated. It was never AI-versus-not-AI. It was always who-holds-the-pen.
 
 ---
 
-## Part 8: "We'll just build it"
+That's the field's sharpest sorting tool — and it has a twin that cuts as deep: **when does work start?**
 
-Now back to the sentence this whole thing opened with, because both of those questions are exactly what it skips over.
+Event-driven, because something happened; or poll-based, because a clock ticked. An orchestrator is, at bottom, an opinion about when work starts, and it has to match the system it lands in. Put a scheduled engine on a reactive system and you write sensors that wait for events that already fired; put a reactive engine on batch ETL and you manufacture fake events a cron line would have triggered for free. Neither is a bug — both are a mismatch.
 
-The build case sounds most reasonable in event-driven microservices, where half the machinery already exists — a broker, some consumers, retries — and what's left really does look like "just" a state machine. And the sprint estimate for that state machine is usually right. But build cost was never the expensive part; maintenance, scalability and reliability are, and the estimate prices the week of writing while silently omitting the next three years of owning. AI hasn't changed that math one bit — it writes the code faster than ever, but it does not carry the pager at 3am when the thing you built wedges itself.
+Half the orchestrator arguments I've sat through were two people describing different backbones while thinking they argued about tools. And both questions — who writes the graph, and when work starts — are exactly what "we'll just build it" skips.
 
-I've watched this fail from both ends. On one end, an entire product built inside a low-code automation tool that hit a wall the day it needed a real test suite and couldn't grow past it. On the other, hand-rolled microservices that quietly rebuilt retries, scheduling and state management four separate times — badly, slightly differently each time — across four services that nobody realised were solving the same problem. Opposite mistakes, identical root: both skipped the one question that sorts it. *Does this problem already have a mature engine, and what would adopting it actually cost?*
+The build case is most tempting in event-driven microservices, where a broker, consumers and retries already exist and what's left looks like "just" a state machine. The estimate is usually right — it only ever prices the writing, never the owning. AI writes the code faster than ever; it still doesn't carry the pager at 3am. I've watched it fail both ways: a product trapped in a low-code tool the day it needed a real test suite, and hand-rolled services that rebuilt retries, scheduling and state four times before anyone noticed it was one problem. Both skipped the question that sorts it — *does this already have a mature engine, and what would adopting it cost?*
 
-So here's the bar I've landed on. Assume adopt. Make build clear the bar. And building clears it for exactly one kind of thing — a *combination* of capabilities you genuinely cannot get without rebuilding around someone else's state model. Something like a topology generated mid-run from intermediate results *and* recursive, resumable state where one unit of work spawns children of its own. Either of those alone you can buy off the shelf. Only both together, tangled up in each other, clear the bar — and even then you should be nervous.
+So: assume adopt, and make build earn its place. It earns it for one thing — a *combination*: a topology generated mid-run, *and* recursive, resumable state where one unit of work spawns children. You can't buy that pairing without rebuilding around someone else's state model. Either alone is off the shelf. And the test is never "is this tool good" — plenty of good ones solve no problem you have — but *does it solve a problem this system actually has?* Adopting isn't free either, so the smallest honest answer is sometimes *neither*.
 
-The test is never "is this tool any good." Plenty of genuinely well-built frameworks solve no problem your system actually has, and adopting one of those is a rewrite with nothing in the numerator — cost, no benefit. The real question is narrower and less flattering: *does this tool solve a problem this system actually has?* Asked periodically, in both directions — of the things you've already built, too, not just the things you're tempted to build next.
+Every engine here is open source — documented and battle-tested, hardened by everyone who ran into the hard parts before you did. The knowledge is free; only the reinvention is expensive. Most build-versus-adopt calls are lost before anyone compares anything — because nobody knew what already existed, and nobody thought one layer past the first answer that sounded right.
 
-One honest caveat, because the argument cuts both ways: adopting isn't free either. A mature engine is a dependency with its own operational surface and a state model you now have to live inside. I've seen teams drown in an orchestrator they adopted for four nightly jobs that a cron line would have run untouched for a decade. The default is adopt. But the smallest honest answer is sometimes *neither* — no engine, no framework, just the cron line and a clear conscience.
-
-Step back, though, because the pattern is bigger than scheduling. There are two kinds of depth, and the sentence we started with confuses them. *Technical depth* is mastery of *how* — the implementation, the algorithms, the craft of construction. For decades that was the whole game, and it's exactly what AI made abundant and cheap. *Cognitive depth* is a different faculty: the capacity to hold a complex, multi-layered problem in your head and actually *process* it — critical analysis, logical reasoning, conceptual mapping, synthesis — instead of surface-scanning until something plausible surfaces. It takes conscious mental effort, and that effort is what makes it depth.
-
-"What's left is just a state machine" is surface scanning: pattern-matching on the parts in front of you and stopping the moment something clicks. Recognising that the thing you're about to write is structurally the same problem four mature engines already solved, that the cost lands in year three rather than sprint two, and that the backbone quietly disqualified half your options before anyone opened a comparison table — that's conceptual mapping, and no model does it on your behalf. Not because the models can't, but because no model is sitting in the room holding your constraints, your regulators, your on-call rotation and your year-three headcount all at once. You are.
-
-![Technical depth is mastery of how; cognitive depth is depth of processing.](../assets/orch-depth.png)
-
-Every engine named in this article is open source — free, documented, and battle-tested by people whose outages you will never have to live through. The knowledge is free. Only the reinvention is expensive. Most build-versus-adopt calls go wrong long before anyone compares anything, because nobody in the room knew what already existed — and nobody thought one layer past the first answer that sounded right.
-
----
-
-## The short version
-
-If you read nothing else:
-
-1. **An orchestrator is a runtime that manages a runtime.** It executes steps, manages state and failure, and governs what happened — and the third job is the one you can't cheaply build yourself.
-2. **There are four kinds, and they don't substitute.** Business process, data, business-plus-data, agentic. Get the category wrong and configuration won't save you.
-3. **Business process is a case file.** The hard part is time and people; a run can pause for days, and you compensate for failures instead of retrying them.
-4. **Data is a conveyor belt.** The hard part is blast radius; what you're really buying is containment, and when the data gets big you push the compute down to where it lives.
-5. **The awkward middle is data in, an agent in the middle, a process out.** Models for judgment, never for transport — the flow decides what happens, the agent only decides what's true.
-6. **Agentic work is a detective.** The graph is an output of the run, not an input, and every guarantee that depended on knowing the graph in advance you now write by hand.
-7. **Two questions sort the whole field before any tool does.** Who writes the graph — declared or generated — and how does work start — event or poll. Both about authorship and timing, neither about AI.
-8. **Assume adopt; make build clear the bar.** AI writes the code for free but doesn't carry the pager. The knowledge is free — only the reinvention is expensive.
-
----
-
-*Tools named: Camunda, Airflow, Kestra, LangChain, LangGraph — all open source. Companion piece: [Agentic Coding: The Delta, the Loop, and the Learning](agentic-coding-the-delta-the-loop-and-the-learning.md).*
+![Declarative — a fixed graph written before the run — versus decided on the fly, where the run generates the topology and adds a node at runtime.](../assets/orch-divide.png)
