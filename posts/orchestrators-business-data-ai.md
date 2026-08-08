@@ -31,6 +31,7 @@ Here's what surprised me when it clicked: every kind of orchestrator does those 
 | Business + data  | Kestra                | a pipeline with decisions in it | who is allowed to write one |
 | Agentic          | LangChain / LangGraph | a goal                          | the plan doesn't exist yet  |
 
+
 One honest note before those names carry any weight: each engine in the table is simply one I've worked with, not the only one that fits its row. There are many alternatives in every category — Temporal, Prefect, Dagster, n8n and CrewAI among them — and I'm naming specific tools only to make each category concrete, not to recommend one over its rivals.
 
 Before the names mean anything, though, I want to hand you three pictures, because they're easier to hold than the table and they carry all the way down.
@@ -40,6 +41,8 @@ Data work is a **conveyor belt**. Same stations, same order, every single night.
 Business process is a **case file**. It moves from desk to desk, and sometimes it just sits in someone's inbox over a long weekend, waiting for a person who isn't in yet.
 
 Agentic work is a **detective**. There's no case plan on day one. What comes back from the third interview decides whether there's a fourth one at all.
+
+![Three shapes to hold — the conveyor belt (data), the case file (business process), and the detective (agentic).](../assets/orch-shapes.png)
 
 Hold those three, because the shapes don't swap. Put a detective on a conveyor belt and the process stops being deterministic — he stops to reason about every item that comes past, but a belt only works if each one is treated the same. Run it the other way, clamp a fixed belt over detective work, and you've demanded the case be solved before the first interview is even done.
 
