@@ -32,7 +32,3 @@ Add a `CNAME` file containing your domain (e.g. `hassaansaleem.com`), point a DN
 1. Copy `posts/agentic-coding-the-delta-the-loop-and-the-learning.md` to `posts/<new-slug>.md` and write it.
 2. Copy `writing/agentic-coding-the-delta-the-loop-and-the-learning.html` to `writing/<new-slug>.html`, swap in the new title, meta, and body.
 3. Add a `<a class="post-link">…</a>` block to the **Writing** section of `index.html` (newest first).
-
-## TODO
-
-- Fill in your real LinkedIn URL in `index.html` (currently a placeholder `https://www.linkedin.com/`).
