@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A Frozen Agent in a Moving World — Syed Hassaan Saleem</title>
+  <meta name="description" content="Distribution shift is not one problem, it is four — and an LLM reprices them unevenly. Naming the shift you have, seeing it past nondeterminism and eval noise, and reaching for the cheapest lever that actually reaches it.">
+  <meta property="og:title" content="A Frozen Agent in a Moving World">
+  <meta property="og:description" content="Why a deployed LLM quietly stops being right — and what it actually costs to fix.">
+  <meta property="og:type" content="article">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧊</text></svg>">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html">Hassaan Saleem</a>
+    <div class="links">
+      <a href="../index.html#writing">Writing</a>
+      <a href="../index.html#work">Work</a>
+      <a href="https://github.com/HassaanSaleem" rel="me">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+<article class="wrap">
+  <div class="kicker">Distribution Shift</div>
+  <h1>A Frozen Agent in a Moving World</h1>
+  <p class="subtitle">Why a deployed LLM quietly stops being right — and what it actually costs to fix.</p>
+  <p class="meta">August 2026 · ~12 min read</p>
+
+  <p>On Friday, Trust and Safety rewrites the policy. A category that was fine all year is a violation as of Monday — same content, new rule.</p>
+
+  <p>Your moderation LLM never got the memo. It is still enforcing last week's rule. No error, no alert, nothing in the logs. Just confidence, waving through the exact thing the new policy bans.</p>
+
+  <p>Two things in that story froze solid, and only one of them is the model.</p>
+
+  <h2 class="sec"><span class="tick" style="background:var(--warm)"></span>The race nobody markets</h2>
+
+  <p>The AI race is sold as a race for intelligence — bigger models, higher benchmarks, who is ahead this month. There is a quieter race nobody markets: staying relevant. A trained model is a snapshot of the world the moment training stopped; the world keeps moving the instant it does.</p>
+
+  <p>"Then just keep training it." Labs do — new versions, continual pretraining, retrieval. But a deployed model is frozen between releases, always lagging, and a retrain swaps in a fresh general distribution, not your deployment's. The crack was never what the model knows. It is what the model <em>assumes</em> about the world it has been put in.</p>
+
+  <p>And the weights are not the only frozen thing. The moment I write the prompt — its rules, its definition of the job, its list of what counts — I pin a second snapshot on top of the first. That layer I can rewrite without retraining, and that is the real edge of an LLM: it adapts where a narrow model needs a rebuild. But a prompt once written ages too. Two frozen layers, one moving world.</p>
+
+  <p>The literature has a name for the moving part: <strong>distribution shift</strong>. The first thing worth understanding about it is that it is not one thing. It is four, and they break an agent in different ways, resist different fixes, and cost wildly different amounts of money.</p>
+
+  <h2 class="sec"><span class="tick" style="background:var(--blue)"></span>The map: four shifts, one symptom</h2>
+
+  <p>Every shift is defined by what moves and what holds.</p>
+
+  <p><strong>Covariate shift — the inputs move, the rule holds.</strong> <code>P(X)</code> changes, <code>P(Y|X)</code> stays. Users code-switch; a partner starts sending you a new file format; the phrasing drifts. The correct label for any given input is unchanged — the model is simply meeting inputs its training under-covered.</p>
+
+  <p><strong>Prior / label shift — the label mix moves, each class still looks like itself.</strong> <code>P(Y)</code> changes, <code>P(X|Y)</code> stays. A fraud wave doubles the positive rate overnight. Every fraudulent case still looks exactly like fraud. But the model is scoring against the old base rate, and it under-flags the surge. Storkey (2009) is where this gets named and isolated cleanly as <em>prior probability shift</em>.</p>
+
+  <p><strong>Concept shift — the same input now has a different correct label.</strong> <code>P(Y|X)</code> changes. That is Friday's policy rewrite: the post did not move, the rule for judging it did. Fine all year, a violation today.</p>
+
+  <p><strong>Domain shift — deployed where it never trained.</strong> New industry, new jargon, a new customer's data. Usually a composite: covariate plus one or more of the others, breaking on several axes at once.</p>
+
+  <figure>
+    <img src="../assets/frozen-agent-map.png" alt="The map — four ways the ground moves under a frozen agent: covariate shift (P(X) moves, P(Y|X) holds), prior/label shift (P(Y) moves, P(X|Y) holds), concept shift (P(Y|X) moves), and domain shift (composite).">
+    <figcaption>Four ways the ground moves under a frozen agent. One symptom on the dashboard, four different diseases underneath.</figcaption>
+  </figure>
+
+  <p>From the outside, all four look identical. The dashboard sags. One symptom, four diseases — and, as we will get to, the fixes diverge in an order you would not guess.</p>
+
+  <p>Which is the whole point of naming them. <strong>"The model got worse" is a symptom, not a diagnosis.</strong> You cannot fix, and cannot even monitor, what you cannot name. And a shifted model was never useless — it was confidently misaligned. Right about most things, wrong exactly where the world moved. That is recoverable, once you know which movement you are looking at.</p>
+
+  <h2 class="sec"><span class="tick" style="background:var(--green)"></span>When the rule moves</h2>
+
+  <p>Concept shift deserves a closer look, because it is the one that behaves least like the others and the one an LLM changes most.</p>
+
+  <p>The policy rewrite did not touch a single post. It changed what counts as a violation. Same content Monday as Friday, but the correct label flipped underneath it. The model cannot feel this. Nothing it observes looks any different — it is not the terrain that shifted, it is the answer key.</p>
+
+  <p>Classically, this was the nightmare shift, the one with no reweighting shortcut. Your entire labeled dataset now carries the old rule's answers, which means every example is mislabeled against the new definition. The only honest fix was to relabel to the new rule and retrain. Weeks, every time the policy moved.</p>
+
+  <p>The LLM inverts it. A trained classifier bakes the rule into a decision boundary. An LLM keeps the specific rule in the prompt — the weights do the reading, the sentence holds the policy. So when the rule changes, you edit the sentence. Add one line, and the model applies the new definition on the very next call. No dataset, no training run, no redeploy.</p>
+
+  <blockquote><p>The hardest classical shift became the cheapest LLM fix. The difficulty order flips.</p></blockquote>
+
+  <p>Two cautions, and I would rather state them than sell past them.</p>
+
+  <p>The edit makes the new rule cheap to <em>express</em>, not automatically to <em>obey</em>. The frozen weights carry their own prior about what "abuse" means, and a definition that fights that prior can be half-followed. The edit still needs an eval to confirm the new verdicts actually land.</p>
+
+  <p>And all of it assumes the rule is articulable. If you can write the new definition down, a sentence fixes it. But some concepts drift where words will not follow — the line moves and nobody can quite say where. When the rule will not reduce to text, a prompt edit cannot reach it, and you are back to examples or retraining.</p>
+
+  <h2 class="sec"><span class="tick" style="background:var(--warm)"></span>Seeing it before you trust it</h2>
+
+  <p>Naming the shift comes second. First you have to be able to <em>see</em> it — and two things blur the view, both of them in your stack rather than in the world.</p>
+
+  <p><strong>Blindness one: the model will not hold still.</strong> Same input, same "deterministic" settings, temperature zero, and the output still changes between runs. Atil et al. (2024) measured this across five LLMs and eight tasks: accuracy swinging up to roughly 15% run to run, best-to-worst gaps as wide as ~70%. Your regression may just be the model wobbling in place.</p>
+
+  <p>Why would a temperature-zero model wobble at all? The usual suspect — GPU threads summing in a nondeterministic order — turns out to be mostly a red herring. He et al. at Thinking Machines (2025) trace it to batch-invariance failure in the kernels (RMSNorm, matmul, attention). Floating-point addition is not associative, so the arithmetic depends on batch size, which means your output depends on who else happened to land in the batch with you. Their fix is batch-invariant kernels, and with them inference goes bitwise-reproducible.</p>
+
+  <p><strong>Blindness two: your eval has error bars you never drew.</strong> A single number on a slide reads as a fact. It is a sample. Miller (2024) treats every eval as an experiment and gives you the error-bar and power formulas to go with it. A move inside the noise band is not a finding — it is the width of your ruler.</p>
+
+  <p>Clear both, and real detection opens up. With outputs that no longer wobble, you can watch the model's own output distribution over time — predicted class balance, input-embedding distribution — and two-sample test each window against a trusted reference. Rabanser et al. (2019), "Failing Loudly," lays out this label-free machinery: you do not need ground truth to watch a distribution move.</p>
+
+  <p>With one blind spot that matters here. If the inputs hold and only the correct answer moves — concept shift, the Friday rewrite — the distributional test sees nothing at all. That one needs labeled spot-checks. There is no free version.</p>
+
+  <p>One more caveat I will not paper over: reproducible is not correct. A batch-invariant kernel makes a wrong answer wrong the same way every time, and stable-wrong is still wrong. Determinism does not buy you a right answer. It buys you a trustworthy signal.</p>
+
+  <h2 class="sec"><span class="tick" style="background:var(--blue)"></span>Fix it cheap</h2>
+
+  <p>For twenty years, when the world moved under a model, the answer was one word: retrain. Relabel, retrain, redeploy — weeks, every time.</p>
+
+  <p>The LLM changes the bill. It is frozen in its weights but not in its behavior: you steer it at inference with instructions, definitions, and context. No parameter update reprices the entire problem.</p>
+
+  <p>"Cheap" here means <em>cheaper than a retraining cycle</em>. Not trivial, not free. And it means a targeted lever, not fiddling. Shuffling formats or piling on examples until a number moves is not adaptation, it is superstition — accuracy swings on example order and formatting alone. Sclar et al. (2023) found meaning-preserving format tweaks moving accuracy by up to ~76 points; Lu et al. (2022) found example ordering alone taking a prompt from near-SOTA to random, with good orderings that do not transfer across models. If a number moves when the meaning did not, you have not adapted anything.</p>
+
+  <p>So, shift by shift:</p>
+
+  <ul>
+    <li><strong>Covariate</strong> — new inputs, same rule. Often free: broad pretraining generalizes across a lot of surface variation. When it does not, retrieval is the robust move. Few-shot only patches the gap, and it is the brittle lever above.</li>
+    <li><strong>Concept</strong> — the rule itself changed. Classically the nightmare (relabel, then retrain); for an LLM, a one-line prompt edit. This is the inversion, and it is the single biggest economic change the LLM era made to this problem.</li>
+    <li><strong>Domain</strong> — a context it never trained on. Mostly you feed it the world: context, few-shot, retrieval. But domain shift is composite, so if <code>P(Y)</code> also moved, that part falls to the exception below.</li>
+    <li><strong>Prior / label</strong> — and here the good news stops.</li>
+  </ul>
+
+  <h2 class="sec"><span class="tick" style="background:var(--green)"></span>The one you cannot prompt</h2>
+
+  <p>The label mix moved. Each class still looks like itself. This is the shift you cannot prompt your way out of, and I am not going to soften it.</p>
+
+  <p>Tell a model "8% of traffic is fraud now" and it will not recalibrate. The bias lives in the output statistics, not in a rule you can edit. There is nothing to rewrite, because nothing about the <em>definition</em> changed — only the base rate, and base rates are not the kind of thing an instruction reaches.</p>
+
+  <p>Worse, the model already carries a label prior you never chose. Zhao et al. (2021) documented majority-label, recency, and common-token biases in GPT-3 and removed them with an affine correction estimated from content-free inputs. Fei et al. (2023) named three distinct label biases and divided out the model's estimated prior at inference. Reif and Schwartz (2024) measured label bias across 279 tasks and 10 models. And Jiang et al. (2023) states the thesis in exactly the right language: in-context learning failure <em>is</em> label shift — LLMs shift the label marginal <code>p(y)</code> while keeping a good label conditional <code>p(x|y)</code> — and fixing it means estimating and adjusting <code>p(y)</code> over the frozen model.</p>
+
+  <p>Which is the classical move, unchanged. Saerens et al. (2002) wrote the recipe: re-estimate the deployment prior from unlabeled data, then rescale a fixed classifier's posteriors by Bayes. Lipton et al. (2018) made it work on a black-box predictor and added a shift hypothesis test. Menon et al. (2021) gives the mechanism in one line — an additive post-hoc logit correction by the log label-prior, no retraining.</p>
+
+  <p>Two things to hold onto. Alexandari et al. (2020) showed that this family only works once the posteriors are calibrated, so recalibrate the confident model <em>before</em> you correct its prior. And Cho et al. (2025) argue that affine calibration of label-token probabilities only imperfectly fixes the decision boundary — so this is a correction, not a cure.</p>
+
+  <blockquote><p>That is the one shift the LLM era did not make cheap.</p></blockquote>
+
+  <h2 class="sec"><span class="tick" style="background:var(--warm)"></span>A prompt once written is never enough</h2>
+
+  <p>Here is the recursion, and it is the part I keep having to relearn.</p>
+
+  <p>The rule you just wrote into the prompt is itself a snapshot, frozen the instant you typed it. The world keeps redefining the job — what counts as abuse this quarter is not what counts next quarter — so today's edit is stale by the next policy meeting. Concept shift for an LLM is not closed by one edit. The fix has a shelf life.</p>
+
+  <p>The prompt is also standing on ground that moves for reasons that have nothing to do with your users. Chen, Zaharia and Zou (2023) held the prompt fixed and watched GPT-4's prime-identification accuracy go from 84% to 51% between March and June of the same year. A fixed prompt can break because the provider shipped. (That is a two-snapshot comparison, not a longitudinal decay study, and the measurement has been argued about — but the direction of the lesson holds.)</p>
+
+  <p>And an entire research field exists on the premise that prompts are re-optimized rather than authored once: APE, ProTeGi, OPRO, DSPy, Promptbreeder, EvoPrompt, TextGrad. Nobody builds automatic prompt optimizers for artifacts you write correctly one time and leave alone.</p>
+
+  <p>So the cheap lever is not a fix you ship. It is upkeep you keep paying.</p>
+
+  <h2 class="sec"><span class="tick" style="background:var(--blue)"></span>What I am not claiming</h2>
+
+  <p>The honest boundary of the argument, because I would rather draw it myself.</p>
+
+  <p>The exact intersection — estimate-and-correct a class prior at inference <em>on a frozen LLM classifier's predictions</em> — is not yet a named research program. Most of the label-shift machinery (BBSE, RLLS, EM adjustment, logit adjustment, online label shift) is model-agnostic and was demonstrated on vision and CLIP, not autoregressive LLMs. The LLM-native anchors are Jiang 2023, Zhao 2021, Fei 2023, and Reif &amp; Schwartz 2024. The bridge from the classical estimators to LLMs is inference, not citation.</p>
+
+  <p>"Correct the prior" also means two different things that should not be conflated: per-sample posterior reweighting, which changes individual predictions, versus aggregate prevalence correction, which fixes a population estimate and no individual prediction at all.</p>
+
+  <p><code>P(X|Y)</code>-invariance is an assumption, not a guarantee. González et al. (2023) show that methods robust to pure prior shift often fail under other shifts, and real deployments drift on more than one axis at once.</p>
+
+  <p>And the "prompts age" argument is my synthesis, not a cited finding. The published evidence covers models drifting under provider updates, prompts being brittle static artifacts, and hand-written prompts being suboptimal from the start. No paper I know of ties prompt re-optimization to real-world data-distribution drift. I think the logic follows. I am telling you it is logic.</p>
+
+  <h2 class="sec"><span class="tick" style="background:var(--green)"></span>The method</h2>
+
+  <p>It is the same method it always was, and capability did not replace it.</p>
+
+  <p>Name the shift you actually have. Clear the two blindnesses so a metric drop is a fact instead of a mood. Then reach for the cheapest lever that reaches <em>that</em> shift — free generalization or retrieval for covariate, a prompt edit for concept, context for domain, and statistical output correction for the prior, because nothing else touches it.</p>
+
+  <p>Capability did not kill distribution shift. It repriced it, unevenly, and left one item on the bill at full cost.</p>
+
+  <p>A frozen agent in a moving world does not need faith. It needs a diagnosis, and the cheapest lever that reaches — pulled again and again, because the world does not stop.</p>
+
+  <h2>References</h2>
+
+  <ul>
+    <li>Alexandari, Kundaje &amp; Shrikumar (2020). <em><a href="https://proceedings.mlr.press/v119/alexandari20a.html">Maximum Likelihood with Bias-Corrected Calibration is Hard-To-Beat at Label Shift Adaptation.</a></em> ICML 2020.</li>
+    <li>Atil et al. (2024). <em><a href="https://arxiv.org/abs/2408.04667">Non-Determinism of "Deterministic" LLM Settings.</a></em> arXiv:2408.04667.</li>
+    <li>Chen, Zaharia &amp; Zou (2023). <em><a href="https://arxiv.org/abs/2307.09009">How Is ChatGPT's Behavior Changing over Time?</a></em> arXiv:2307.09009.</li>
+    <li>Cho et al. (2025). <em><a href="https://aclanthology.org/2025.naacl-long.278/">Token-based Decision Criteria Are Suboptimal in In-context Learning.</a></em> NAACL 2025.</li>
+    <li>Fei, Hou, Chen &amp; Bosselut (2023). <em><a href="https://aclanthology.org/2023.acl-long.783/">Mitigating Label Biases for In-context Learning.</a></em> ACL 2023.</li>
+    <li>González, Moreo &amp; Sebastiani (2023). <em><a href="https://arxiv.org/abs/2310.04565">Binary Quantification and Dataset Shift.</a></em> arXiv:2310.04565.</li>
+    <li>He et al., Thinking Machines Lab (2025). <em><a href="https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/">Defeating Nondeterminism in LLM Inference.</a></em></li>
+    <li>Jiang, Zhang, Liu, Zhao &amp; Liu (2023). <em><a href="https://aclanthology.org/2023.findings-emnlp.152/">Generative Calibration for In-context Learning.</a></em> Findings of EMNLP 2023.</li>
+    <li>Lipton, Wang &amp; Smola (2018). <em><a href="https://arxiv.org/abs/1802.03916">Detecting and Correcting for Label Shift with Black Box Predictors.</a></em> ICML 2018.</li>
+    <li>Lu, Bartolo, Moore, Riedel &amp; Stenetorp (2022). <em><a href="https://aclanthology.org/2022.acl-long.556/">Fantastically Ordered Prompts and Where to Find Them.</a></em> ACL 2022.</li>
+    <li>Menon et al. (2021). <em><a href="https://arxiv.org/abs/2007.07314">Long-tail Learning via Logit Adjustment.</a></em> ICLR 2021.</li>
+    <li>Miller (2024). <em><a href="https://arxiv.org/abs/2411.00640">Adding Error Bars to Evals.</a></em> arXiv:2411.00640.</li>
+    <li>Rabanser, Günnemann &amp; Lipton (2019). <em><a href="https://arxiv.org/abs/1810.11953">Failing Loudly: An Empirical Study of Methods for Detecting Dataset Shift.</a></em> NeurIPS 2019.</li>
+    <li>Reif &amp; Schwartz (2024). <em><a href="https://aclanthology.org/2024.naacl-long.378/">Beyond Performance: Quantifying and Mitigating Label Bias in LLMs.</a></em> NAACL 2024.</li>
+    <li>Saerens, Latinne &amp; Decaestecker (2002). <em><a href="https://doi.org/10.1162/089976602753284446">Adjusting the Outputs of a Classifier to New a Priori Probabilities.</a></em> Neural Computation 14(1).</li>
+    <li>Sclar, Choi, Tsvetkov &amp; Suhr (2023). <em><a href="https://arxiv.org/abs/2310.11324">Quantifying Language Models' Sensitivity to Spurious Features in Prompt Design.</a></em> arXiv:2310.11324.</li>
+    <li>Storkey (2009). <em>When Training and Test Sets Are Different: Characterizing Learning Transfer.</em> In Dataset Shift in Machine Learning, MIT Press.</li>
+    <li>Zhao, Wallace, Feng, Klein &amp; Singh (2021). <em><a href="https://arxiv.org/abs/2102.09690">Calibrate Before Use: Improving Few-Shot Performance of Language Models.</a></em> ICML 2021.</li>
+  </ul>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span><a href="../index.html">← Back to home</a></span>
+    <span><a href="https://github.com/HassaanSaleem">github.com/HassaanSaleem</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
