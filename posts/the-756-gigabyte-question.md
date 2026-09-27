@@ -154,7 +154,7 @@ The measured sweep, converted into money and waiting:
 | 256 | 77.8s | $5.17 | 1.35× cheaper | no |
 | 1,024 (B300) | 250.7s | $3.20 | 2.17× cheaper | no |
 
-Read that twice, because it is the verdict in one table. Every configuration meaningfully cheaper than the API makes users wait three to four minutes for the first word. Every configuration a human would actually tolerate saves about 25%.
+Read that twice, because it is the verdict in one table. Every configuration meaningfully cheaper than the API makes users wait 78 to 251 seconds for the first word. Every configuration a human would actually tolerate saves about 20%.
 
 Run the chain all the way down to cost per developer per month, and one variable swamps everything else:
 
@@ -192,7 +192,7 @@ So the answer to the question I opened with is no.
 
 ## The number nobody has measured
 
-Before going further I have to be honest about the figure the last section leans on hardest, because the argument is load-bearing on it.
+Before going further I have to be honest about the figure the arithmetic leans on hardest, because the argument is load-bearing on it.
 
 Nobody has ever published a cache hit-rate measurement for a coding agent running against self-hosted open-source serving software. After the source code, the papers, the issue trackers and every setup guide I could find: it does not exist. The closest evidence is SGLang's production figures on a similar mechanism — 52.4% and 74.1% over a month of traffic. My own measured rate, on a managed API rather than a self-hosted node, is 97.75%.
 
@@ -200,7 +200,7 @@ So 70% is **a well-reasoned estimate, not a measurement.** I would rather label 
 
 And the honest reading of that table is not "self-hosting costs $508 a developer." It is that the decisive variable in any self-hosting business case is one the industry has not measured yet — which is itself a good reason to be suspicious of anyone who quotes you a confident figure, including me.
 
-One more boundary. GLM-5.2's claim to 87% of Opus's quality comes from the vendor's own benchmarks, which is why the comparison above leans on price rather than on that claim. The last section explains why I do not trust benchmarks in this area at all — that one included.
+One more boundary. GLM-5.2's claim to 87% of Opus's quality comes from the vendor's own benchmarks, which is why the comparison above leans on price rather than on that claim. The harness section, further down, explains why I do not trust benchmarks in this area at all — that one included.
 
 ## Why the API is cheap anyway
 

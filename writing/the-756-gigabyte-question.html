@@ -29,7 +29,7 @@
   <div class="kicker">Inference Economics</div>
   <h1>The 756-Gigabyte Question</h1>
   <p class="subtitle">The models are free now — so why does anyone still pay for an API?</p>
-  <p class="meta">September 2026 · ~15 min read</p>
+  <p class="meta">September 2026 · ~13 min read</p>
 
   <p>I pay $200 a month for Claude. In July I measured what I actually used: 8.2 billion tokens of input, 41.7 million of output. At list price for Opus 4.8 — cache reads and writes included — that same work costs $6,727.</p>
 
@@ -208,7 +208,7 @@
     </tbody>
   </table>
 
-  <p>Read that twice, because it is the verdict in one table. Every configuration meaningfully cheaper than the API makes users wait three to four minutes for the first word. Every configuration a human would actually tolerate saves about 25%.</p>
+  <p>Read that twice, because it is the verdict in one table. Every configuration meaningfully cheaper than the API makes users wait 78 to 251 seconds for the first word. Every configuration a human would actually tolerate saves about 20%.</p>
 
   <p>Run the chain all the way down to cost per developer per month, and one variable swamps everything else:</p>
 
@@ -257,7 +257,7 @@
 
   <h2 class="sec"><span class="tick" style="background:var(--green)"></span>The number nobody has measured</h2>
 
-  <p>Before going further I have to be honest about the figure the last section leans on hardest, because the argument is load-bearing on it.</p>
+  <p>Before going further I have to be honest about the figure the arithmetic leans on hardest, because the argument is load-bearing on it.</p>
 
   <p>Nobody has ever published a cache hit-rate measurement for a coding agent running against self-hosted open-source serving software. After the source code, the papers, the issue trackers and every setup guide I could find: it does not exist. The closest evidence is SGLang's production figures on a similar mechanism — 52.4% and 74.1% over a month of traffic. My own measured rate, on a managed API rather than a self-hosted node, is 97.75%.</p>
 
@@ -265,7 +265,7 @@
 
   <p>And the honest reading of that table is not "self-hosting costs $508 a developer." It is that the decisive variable in any self-hosting business case is one the industry has not measured yet — which is itself a good reason to be suspicious of anyone who quotes you a confident figure, including me.</p>
 
-  <p>One more boundary. GLM-5.2's claim to 87% of Opus's quality comes from the vendor's own benchmarks, which is why the comparison above leans on price rather than on that claim. The last section explains why I do not trust benchmarks in this area at all — that one included.</p>
+  <p>One more boundary. GLM-5.2's claim to 87% of Opus's quality comes from the vendor's own benchmarks, which is why the comparison above leans on price rather than on that claim. The harness section, further down, explains why I do not trust benchmarks in this area at all — that one included.</p>
 
   <h2 class="sec"><span class="tick" style="background:var(--warm)"></span>Why the API is cheap anyway</h2>
 
