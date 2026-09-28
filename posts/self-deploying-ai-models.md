@@ -1,4 +1,4 @@
-# The 756-Gigabyte Question
+# Everything You Need to Know About Self-Deploying AI Models
 
 ### The models are free now — so why does anyone still pay for an API?
 
@@ -20,7 +20,7 @@ Three weeks of research later I have the answer, and almost none of it was where
 
 The answer is no. The interesting part is the reason, and nobody guesses it: **the cost of AI is not thinking, it is fetching.** Follow the fetching all the way to the bottom and the leverage turns out to be sitting one layer up from where everybody is looking.
 
-## A model is a file
+## 1. The model as a file
 
 Start with the least glamorous fact in artificial intelligence.
 
@@ -40,11 +40,11 @@ That is why an answer types itself onto your screen one word at a time instead o
 
 Hold onto that, because it is the most expensive fact in this piece. On every one of those 500 trips the machine has to read the model. All of it. And the reading, not the thinking, is where the money goes.
 
-![The Bill — $200 paid against $6,727 of capacity at list price, a 33.6× subsidy; the model as one frozen 756 GB file of 753 billion numbers; and the generation loop, where output becomes input and the sequence grows by one every pass.](../assets/756-the-bill.png)
+![The Bill — $200 paid against $6,727 of capacity at list price, a 33.6× subsidy; the model as one frozen 756 GB file of 753 billion numbers; and the generation loop, where output becomes input and the sequence grows by one every pass.](../assets/self-deploy-the-bill.png)
 
 *What one month of usage actually cost, and the two facts everything else rests on.*
 
-## The librarian's walk
+## 2. The memory bandwidth floor
 
 To produce one word, the GPU has to read the model's weights. Not some of them — for a dense model, all of them. Every word, every time.
 
@@ -62,7 +62,7 @@ Picture a librarian in a library of 140,000 books. To answer any question at all
 
 That is the model producing one word.
 
-## The crowd on the walk
+## 3. The economics of concurrency
 
 Now the pivot the entire industry turns on. Somebody asks the librarian a second question while he is already walking.
 
@@ -84,11 +84,11 @@ And the escape closes as the machine fills up. One word reads 3% of the experts.
 
 > Sparsity is a low-concurrency advantage: fast for one person, progressively less special as the machine fills up. Exactly backwards from what a deployment needs.
 
-![The Librarian — 140 GB ÷ 3.35 TB/s = 42 ms per word while the compute units sit over 99% idle; cost per million words falling 74× from one user to a hundred; and the mixture-of-experts escape closing from 3% to 87% of experts read as concurrency rises.](../assets/756-the-librarian.png)
+![The Librarian — 140 GB ÷ 3.35 TB/s = 42 ms per word while the compute units sit over 99% idle; cost per million words falling 74× from one user to a hundred; and the mixture-of-experts escape closing from 3% to 87% of experts read as concurrency rises.](../assets/self-deploy-the-librarian.png)
 
 *The floor is set by memory, not compute — and it is shared by everyone on the walk.*
 
-## The cache, exactly
+## 4. The prefix cache and its failure mode
 
 The model does not remember your last message. The file never changes, so the software resends the whole conversation from the beginning every time. By turn 20 you are re-sending a block of text that has already been processed nineteen times.
 
@@ -128,11 +128,11 @@ And a hit saves less than you would think. It skips recomputing the history. It 
 
 At 64 concurrent users the weights are read once for the whole batch, 40 GB; the conversations are read per user, 399 GB. That is the memory wall in its final form — the conversations now cost ten times more to read than the model does.
 
-![The Cache — two users whose prompts diverge at position 9, inside the first 16-token block, so the fingerprint chain breaks and User 2 gets zero tokens free instead of the 16 a divergence at position 17 would have saved; and at 64 users, 40 GB of weights read against 399 GB of conversations.](../assets/756-the-cache.png)
+![The Cache — two users whose prompts diverge at position 9, inside the first 16-token block, so the fingerprint chain breaks and User 2 gets zero tokens free instead of the 16 a divergence at position 17 would have saved; and at 64 users, 40 GB of weights read against 399 GB of conversations.](../assets/self-deploy-the-cache.png)
 
 *One different word at position 9 forfeits every identical token after it.*
 
-## The arithmetic
+## 5. The cost of a node
 
 Now the numbers. Eight H200s cost about $25,638 a month from a specialist GPU cloud — and the same GPU costs between $1.38 and $12.29 an hour depending purely on who you buy it from. **A 9× spread on an identical part.** Before anyone spends three months optimizing code, spend three days on procurement.
 
@@ -186,13 +186,13 @@ There is no scale economy past the first machine, either. One node serves about 
 
 So the answer to the question I opened with is no.
 
-![The Arithmetic — the measured sweep showing every configuration cheaper than the API waiting 78 to 251 seconds for the first word; cache hit rate moving cost per developer from $914 at 45% to $86 at 97.75%; and self-hosted GLM-5.2 at $508 landing level with Claude Haiku at $487.](../assets/756-the-arithmetic.png)
+![The Arithmetic — the measured sweep showing every configuration cheaper than the API waiting 78 to 251 seconds for the first word; cache hit rate moving cost per developer from $914 at 45% to $86 at 97.75%; and self-hosted GLM-5.2 at $508 landing level with Claude Haiku at $487.](../assets/self-deploy-the-arithmetic.png)
 
 *Fast, cheap, usable — pick two. And one unmeasured number moves the whole thing 10×.*
 
-## The number nobody has measured
+## 6. The limits of the estimate
 
-Before going further I have to be honest about the figure the arithmetic leans on hardest, because the argument is load-bearing on it.
+Before going further I have to be honest about the figure that cost estimate leans on hardest, because the argument is load-bearing on it.
 
 Nobody has ever published a cache hit-rate measurement for a coding agent running against self-hosted open-source serving software. After the source code, the papers, the issue trackers and every setup guide I could find: it does not exist. The closest evidence is SGLang's production figures on a similar mechanism — 52.4% and 74.1% over a month of traffic. My own measured rate, on a managed API rather than a self-hosted node, is 97.75%.
 
@@ -202,7 +202,7 @@ And the honest reading of that table is not "self-hosting costs $508 a developer
 
 One more boundary. GLM-5.2's claim to 87% of Opus's quality comes from the vendor's own benchmarks, which is why the comparison above leans on price rather than on that claim. The harness section, further down, explains why I do not trust benchmarks in this area at all — that one included.
 
-## Why the API is cheap anyway
+## 7. The economics of the managed API
 
 Back to where this started. How does anybody sell a $200 subscription to someone burning $6,727 of capacity?
 
@@ -214,7 +214,7 @@ If you ever sell anything metered by compute, the lesson is free: never offer an
 
 And falling prices will not save you. Cheaper tokens do not reduce spend; they unlock new workloads faster than the price falls. Economists call it Jevons paradox. **Your invoice calls it Tuesday.**
 
-## The harness
+## 8. The harness as the real variable
 
 So if self-hosting does not pay, where is the opening? Not renting GPUs. Not undercutting $0.14-per-million Chinese APIs. Not building a serving engine — vLLM and SGLang are mature, free and well funded.
 
@@ -232,11 +232,11 @@ It moves quality too, and this is the part I found genuinely surprising. On Term
 
 Which means every vendor benchmark you have ever read is measuring somebody's harness. The model is in there somewhere, underneath a variable three times larger that nobody reports.
 
-![The Harness — changing the model moves 8.4 points while changing the harness moves 22; a 5.5× spread on the invoice between a well-built and a badly-built harness; 197 tokens in per token out on agentic coding; and one unsorted tool list at position 1 costing 56,370 cached tokens per session.](../assets/756-the-harness.png)
+![The Harness — changing the model moves 8.4 points while changing the harness moves 22; a 5.5× spread on the invoice between a well-built and a badly-built harness; 197 tokens in per token out on agentic coding; and one unsorted tool list at position 1 costing 56,370 cached tokens per session.](../assets/self-deploy-the-harness.png)
 
 *The wrapper moves more than the model does — and it is invisible in every benchmark that exists.*
 
-## What I would actually do
+## 9. Recommendation
 
 **Self-host for sovereignty, never for savings.** If the data cannot leave the country then the arithmetic stops mattering and you build the node. That is the one honest case, and it is a good one.
 

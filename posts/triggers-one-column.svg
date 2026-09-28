@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+<rect width="1920" height="1080" fill="#0A0C10"/>
+<text x="140" y="82" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#59616F" letter-spacing="3.4">SUPPLEMENT  ·  TRIGGERS</text>
+<text x="140" y="142" font-family="Arial, Helvetica, sans-serif" font-size="43" fill="#F4F6F8" font-weight="bold">Every way a run starts.</text>
+<text x="140" y="188" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#9AA3B2">Six triggers. Every serious orchestrator has all six under one name or another — Airflow and Kestra included.</text>
+<circle cx="145" cy="280" r="4" fill="#F5A623"/>
+<text x="164" y="287" font-family="Arial, Helvetica, sans-serif" font-size="21" fill="#F4F6F8" font-weight="bold" letter-spacing="0.8">CRON</text>
+<text x="164" y="312" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#6B7382">a clock ticked</text>
+<text x="470" y="284" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#9AA3B2">A time expression fires the run: every night at three, every fifteen minutes, the first business day of the month.</text>
+<text x="470" y="310" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#7E8798">The cheapest one to reason about — and the only one that still runs on a night when nothing happened at all.</text>
+<rect x="1670.0" y="270" width="110.0" height="27" rx="13.5" fill="#121622" stroke="#F5A623" stroke-opacity="0.5" stroke-width="1"/>
+<text x="1725.0" y="288" font-family="'Courier New', Courier, monospace" font-size="12" fill="#F5A623" font-weight="bold" text-anchor="middle" letter-spacing="1">POLL-BASED</text>
+<line x1="140" y1="358" x2="1780" y2="358" stroke="#1D2331" stroke-width="1"/>
+<circle cx="145" cy="398" r="4" fill="#2DD4BF"/>
+<text x="164" y="405" font-family="Arial, Helvetica, sans-serif" font-size="21" fill="#F4F6F8" font-weight="bold" letter-spacing="0.8">DEPENDENCY</text>
+<text x="164" y="430" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#6B7382">something upstream landed</text>
+<text x="470" y="402" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#9AA3B2">A dataset was updated or another workflow reached a state, and this run starts because of it. The producer announces; the consumer wakes.</text>
+<text x="470" y="428" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#7E8798">This is what retires the guessed cron offset — you stop scheduling the downstream job for “probably done by 4am”.</text>
+<rect x="1654.8" y="388" width="125.19999999999999" height="27" rx="13.5" fill="#121622" stroke="#2DD4BF" stroke-opacity="0.5" stroke-width="1"/>
+<text x="1717.4" y="406" font-family="'Courier New', Courier, monospace" font-size="12" fill="#2DD4BF" font-weight="bold" text-anchor="middle" letter-spacing="1">EVENT-DRIVEN</text>
+<line x1="140" y1="476" x2="1780" y2="476" stroke="#1D2331" stroke-width="1"/>
+<circle cx="145" cy="516" r="4" fill="#2DD4BF"/>
+<text x="164" y="523" font-family="Arial, Helvetica, sans-serif" font-size="21" fill="#F4F6F8" font-weight="bold" letter-spacing="0.8">WEBHOOK</text>
+<text x="164" y="548" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#6B7382">pushed in from outside</text>
+<text x="470" y="520" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#9AA3B2">An HTTP call from another system starts the run, and its body and headers become that run's input.</text>
+<text x="470" y="546" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#7E8798">Nothing waits and nothing polls — the sender decides when work begins, so the latency is theirs to spend, not yours.</text>
+<rect x="1654.8" y="506" width="125.19999999999999" height="27" rx="13.5" fill="#121622" stroke="#2DD4BF" stroke-opacity="0.5" stroke-width="1"/>
+<text x="1717.4" y="524" font-family="'Courier New', Courier, monospace" font-size="12" fill="#2DD4BF" font-weight="bold" text-anchor="middle" letter-spacing="1">EVENT-DRIVEN</text>
+<line x1="140" y1="594" x2="1780" y2="594" stroke="#1D2331" stroke-width="1"/>
+<circle cx="145" cy="634" r="4" fill="#F5A623"/>
+<text x="164" y="641" font-family="Arial, Helvetica, sans-serif" font-size="21" fill="#F4F6F8" font-weight="bold" letter-spacing="0.8">POLL</text>
+<text x="164" y="666" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#6B7382">wait until it shows up</text>
+<text x="470" y="638" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#9AA3B2">Ask on an interval until the answer is yes: a file landed, a row appeared, an endpoint finally returned 200.</text>
+<text x="470" y="664" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#7E8798">The universal adapter for systems that cannot notify you. You pay an interval of latency and a great many empty checks.</text>
+<rect x="1670.0" y="624" width="110.0" height="27" rx="13.5" fill="#121622" stroke="#F5A623" stroke-opacity="0.5" stroke-width="1"/>
+<text x="1725.0" y="642" font-family="'Courier New', Courier, monospace" font-size="12" fill="#F5A623" font-weight="bold" text-anchor="middle" letter-spacing="1">POLL-BASED</text>
+<line x1="140" y1="712" x2="1780" y2="712" stroke="#1D2331" stroke-width="1"/>
+<circle cx="145" cy="752" r="4" fill="#2DD4BF"/>
+<text x="164" y="759" font-family="Arial, Helvetica, sans-serif" font-size="21" fill="#F4F6F8" font-weight="bold" letter-spacing="0.8">STREAM</text>
+<text x="164" y="784" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#6B7382">one run per message</text>
+<text x="470" y="756" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#9AA3B2">A queue or change feed pushes each message straight through — Kafka, SQS, Pub/Sub, MQTT, database CDC.</text>
+<text x="470" y="782" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#7E8798">One execution per message rather than one batch per window: latency in milliseconds, and a volume you now have to bound.</text>
+<rect x="1654.8" y="742" width="125.19999999999999" height="27" rx="13.5" fill="#121622" stroke="#2DD4BF" stroke-opacity="0.5" stroke-width="1"/>
+<text x="1717.4" y="760" font-family="'Courier New', Courier, monospace" font-size="12" fill="#2DD4BF" font-weight="bold" text-anchor="middle" letter-spacing="1">EVENT-DRIVEN</text>
+<line x1="140" y1="830" x2="1780" y2="830" stroke="#1D2331" stroke-width="1"/>
+<circle cx="145" cy="870" r="4" fill="#6B7382"/>
+<text x="164" y="877" font-family="Arial, Helvetica, sans-serif" font-size="21" fill="#F4F6F8" font-weight="bold" letter-spacing="0.8">MANUAL</text>
+<text x="164" y="902" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#6B7382">a person, or history</text>
+<text x="470" y="874" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#9AA3B2">Someone presses run with a set of parameters — the same code path as everything above, with a human at the front of it.</text>
+<text x="470" y="900" font-family="Arial, Helvetica, sans-serif" font-size="15.5" fill="#7E8798">Its twin is backfill: replaying every window you missed, deliberately, all at once.</text>
+<rect x="1677.6" y="860" width="102.39999999999999" height="27" rx="13.5" fill="#121622" stroke="#6B7382" stroke-opacity="0.5" stroke-width="1"/>
+<text x="1728.8" y="878" font-family="'Courier New', Courier, monospace" font-size="12" fill="#6B7382" font-weight="bold" text-anchor="middle" letter-spacing="1">ON DEMAND</text>
+<line x1="140" y1="948" x2="1780" y2="948" stroke="#1D2331" stroke-width="1"/>
+<text x="140" y="992" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#F4F6F8">Three fire because something happened. Two fire because a clock ticked. The sixth is a person.</text>
+<text x="140" y="1018" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#6B7382">Which of those an engine is actually built around is the argument underneath every orchestrator comparison.</text>
+</svg>

@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+<rect width="1920" height="1080" fill="#0A0C10"/>
+<text x="72" y="78" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#59616F" letter-spacing="3.4">SUPPLEMENT  ·  WHAT STARTS A RUN</text>
+<text x="72" y="132" font-family="Arial, Helvetica, sans-serif" font-size="41" fill="#F4F6F8" font-weight="bold">Every way a run begins.</text>
+<text x="72" y="176" font-family="Arial, Helvetica, sans-serif" font-size="16.5" fill="#9AA3B2">Six things can start work. Both engines cover all six — they just disagree about where you are allowed to declare it.</text>
+<rect x="288" y="228" width="768" height="692" rx="10" fill="#121622" stroke="#272E3E" stroke-width="1"/>
+<text x="316" y="270" font-family="'Courier New', Courier, monospace" font-size="21" fill="#2DD4BF" font-weight="bold" letter-spacing="1.5">AIRFLOW</text>
+<text x="316" y="291" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#6B7382">the schedule is a property of the DAG</text>
+<line x1="288" y1="302" x2="1056" y2="302" stroke="#272E3E" stroke-width="1"/>
+<rect x="1080" y="228" width="768" height="692" rx="10" fill="#121622" stroke="#272E3E" stroke-width="1"/>
+<text x="1108" y="270" font-family="'Courier New', Courier, monospace" font-size="21" fill="#A78BFA" font-weight="bold" letter-spacing="1.5">KESTRA</text>
+<text x="1108" y="291" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#6B7382">triggers are a list on the flow</text>
+<line x1="1080" y1="302" x2="1848" y2="302" stroke="#272E3E" stroke-width="1"/>
+<circle cx="77" cy="335" r="3.5" fill="#6B7382"/>
+<text x="92" y="340" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#F4F6F8" font-weight="bold" letter-spacing="0.6">CLOCK</text>
+<text x="92" y="362" font-family="'Courier New', Courier, monospace" font-size="11.5" fill="#6B7382">a time came round</text>
+<text x="316" y="338" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#2DD4BF">schedule="0 3 * * *"</text>
+<text x="316" y="364" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">Cron string, timedelta or @daily — odd calendars get a custom Timetable class.</text>
+<text x="316" y="384" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">One schedule per DAG. It is a property of the DAG object, not a separate thing.</text>
+<text x="1108" y="338" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#A78BFA">trigger.Schedule</text>
+<text x="1108" y="364" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">Cron plus a timezone, with conditions layered on: nth weekday, business days, windows.</text>
+<text x="1108" y="384" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">Missed windows replay from the UI as a backfill across the trigger's past interval.</text>
+<line x1="289" y1="405" x2="1055" y2="405" stroke="#1D2331" stroke-width="1"/>
+<line x1="1081" y1="405" x2="1847" y2="405" stroke="#1D2331" stroke-width="1"/>
+<circle cx="77" cy="438" r="3.5" fill="#6B7382"/>
+<text x="92" y="443" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#F4F6F8" font-weight="bold" letter-spacing="0.6">DATA EVENT</text>
+<text x="92" y="465" font-family="'Courier New', Courier, monospace" font-size="11.5" fill="#6B7382">something upstream landed</text>
+<text x="316" y="441" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#2DD4BF">schedule=[Asset("s3://…")]</text>
+<text x="316" y="467" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">The DAG starts when an upstream task updates the asset — Datasets before 3.0.</text>
+<text x="316" y="487" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">Or push the other way with TriggerDagRunOperator: one DAG starts another by name.</text>
+<text x="1108" y="441" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#A78BFA">trigger.Flow</text>
+<text x="1108" y="467" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">Start this flow when another flow reaches a state, filtered by namespace and status.</text>
+<text x="1108" y="487" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">Declared on the downstream flow — the upstream one never learns it has a listener.</text>
+<line x1="289" y1="508" x2="1055" y2="508" stroke="#1D2331" stroke-width="1"/>
+<line x1="1081" y1="508" x2="1847" y2="508" stroke="#1D2331" stroke-width="1"/>
+<circle cx="77" cy="541" r="3.5" fill="#6B7382"/>
+<text x="92" y="546" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#F4F6F8" font-weight="bold" letter-spacing="0.6">WEBHOOK</text>
+<text x="92" y="568" font-family="'Courier New', Courier, monospace" font-size="11.5" fill="#6B7382">pushed in from outside</text>
+<text x="316" y="544" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#2DD4BF">POST /api/v2/dags/{id}/dagRuns</text>
+<text x="316" y="570" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">No inbound webhook of its own. The REST API is the endpoint (/api/v1 on 2.x).</text>
+<text x="316" y="590" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">Anything public-facing wants a gateway in front for auth, mapping and rate limits.</text>
+<text x="1108" y="544" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#A78BFA">trigger.Webhook</text>
+<text x="1108" y="570" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">A real URL per flow: /api/v1/executions/webhook/{namespace}/{flow}/{key}.</text>
+<text x="1108" y="590" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">Body, headers and query arrive as {{ trigger.body }} for the tasks to read.</text>
+<line x1="289" y1="611" x2="1055" y2="611" stroke="#1D2331" stroke-width="1"/>
+<line x1="1081" y1="611" x2="1847" y2="611" stroke="#1D2331" stroke-width="1"/>
+<circle cx="77" cy="644" r="3.5" fill="#6B7382"/>
+<text x="92" y="649" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#F4F6F8" font-weight="bold" letter-spacing="0.6">POLL</text>
+<text x="92" y="671" font-family="'Courier New', Courier, monospace" font-size="11.5" fill="#6B7382">wait until it shows up</text>
+<text x="316" y="647" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#2DD4BF">S3KeySensor · SqlSensor · ExternalTaskSensor</text>
+<text x="316" y="673" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">Sensors sit inside the DAG — the run has already started and is now waiting.</text>
+<text x="316" y="693" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">mode="reschedule" or deferrable=True, or the wait pins a worker slot for hours.</text>
+<text x="1108" y="647" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#A78BFA">interval: PT1M</text>
+<text x="1108" y="673" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">Polling triggers start the flow: file detect on S3/GCS/SFTP, JDBC query, HTTP check.</text>
+<text x="1108" y="693" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">Evaluated every interval — no execution exists at all until the condition is true.</text>
+<line x1="289" y1="714" x2="1055" y2="714" stroke="#1D2331" stroke-width="1"/>
+<line x1="1081" y1="714" x2="1847" y2="714" stroke="#1D2331" stroke-width="1"/>
+<circle cx="77" cy="747" r="3.5" fill="#6B7382"/>
+<text x="92" y="752" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#F4F6F8" font-weight="bold" letter-spacing="0.6">STREAM</text>
+<text x="92" y="774" font-family="'Courier New', Courier, monospace" font-size="11.5" fill="#6B7382">one run per message</text>
+<text x="316" y="750" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#2DD4BF">AssetWatcher(MessageQueueTrigger)</text>
+<text x="316" y="776" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">Airflow 3 event-driven scheduling: a queue message updates an asset, asset starts the DAG.</text>
+<text x="316" y="796" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">SQS, Kafka and friends, through the common-messaging provider.</text>
+<text x="1108" y="750" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#A78BFA">RealtimeTrigger</text>
+<text x="1108" y="776" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">Kafka, SQS, Pub/Sub, MQTT, AMQP, Postgres CDC — one execution per message, no interval.</text>
+<text x="1108" y="796" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">Latency is milliseconds rather than however long you were willing to set the poll to.</text>
+<line x1="289" y1="817" x2="1055" y2="817" stroke="#1D2331" stroke-width="1"/>
+<line x1="1081" y1="817" x2="1847" y2="817" stroke="#1D2331" stroke-width="1"/>
+<circle cx="77" cy="850" r="3.5" fill="#6B7382"/>
+<text x="92" y="855" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#F4F6F8" font-weight="bold" letter-spacing="0.6">HUMAN</text>
+<text x="92" y="877" font-family="'Courier New', Courier, monospace" font-size="11.5" fill="#6B7382">a person, or history</text>
+<text x="316" y="853" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#2DD4BF">airflow dags trigger</text>
+<text x="316" y="879" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">Trigger DAG in the UI with a conf JSON, the CLI, or the API — one code path.</text>
+<text x="316" y="899" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">catchup=True is the other one: every missed interval since start_date, all at once.</text>
+<text x="1108" y="853" font-family="'Courier New', Courier, monospace" font-size="14.5" fill="#A78BFA">Execute · inputs:</text>
+<text x="1108" y="879" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#9AA3B2">Execute in the UI renders a typed form straight from the flow's declared inputs.</text>
+<text x="1108" y="899" font-family="Arial, Helvetica, sans-serif" font-size="13.2" fill="#7E8798">Same run over the REST API, or a backfill across a Schedule trigger's past window.</text>
+<text x="288" y="960" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#2DD4BF" font-weight="bold" letter-spacing="1.2">"TRIGGER" NAMES TWO DIFFERENT THINGS</text>
+<text x="288" y="986" font-family="Arial, Helvetica, sans-serif" font-size="12.8" fill="#9AA3B2">In Airflow a Trigger is a BaseTrigger the triggerer process runs on an asyncio loop, so a deferred</text>
+<text x="288" y="1005" font-family="Arial, Helvetica, sans-serif" font-size="12.8" fill="#9AA3B2">task can wait on the world without holding a worker slot. It is machinery for waiting — not the</text>
+<text x="288" y="1024" font-family="Arial, Helvetica, sans-serif" font-size="12.8" fill="#9AA3B2">thing that starts a DAG. In Kestra, a trigger is exactly and only the thing that starts a flow.</text>
+<text x="1080" y="960" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#A78BFA" font-weight="bold" letter-spacing="1.2">ONE SCHEDULE vs A LIST OF TRIGGERS</text>
+<text x="1080" y="986" font-family="Arial, Helvetica, sans-serif" font-size="12.8" fill="#9AA3B2">A DAG gets one schedule=; everything else is a sensor inside the graph or a POST from outside. A</text>
+<text x="1080" y="1005" font-family="Arial, Helvetica, sans-serif" font-size="12.8" fill="#9AA3B2">Kestra flow gets a triggers: list — cron and webhook and queue on the same flow, each with its own</text>
+<text x="1080" y="1024" font-family="Arial, Helvetica, sans-serif" font-size="12.8" fill="#9AA3B2">conditions. The same jobs get started either way. What differs is where you are allowed to say so.</text>
+<text x="72" y="960" font-family="'Courier New', Courier, monospace" font-size="12.5" fill="#F4F6F8" font-weight="bold" letter-spacing="1.2">THE TELL</text>
+<text x="72" y="986" font-family="Arial, Helvetica, sans-serif" font-size="12.8" fill="#6B7382">Two words that</text>
+<text x="72" y="1005" font-family="Arial, Helvetica, sans-serif" font-size="12.8" fill="#6B7382">do not survive</text>
+<text x="72" y="1024" font-family="Arial, Helvetica, sans-serif" font-size="12.8" fill="#6B7382">the crossing.</text>
+</svg>

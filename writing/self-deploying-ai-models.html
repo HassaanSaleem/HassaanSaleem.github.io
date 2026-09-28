@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The 756-Gigabyte Question — Syed Hassaan Saleem</title>
+  <title>Everything You Need to Know About Self-Deploying AI Models — Syed Hassaan Saleem</title>
   <meta name="description" content="Frontier-class model weights are free to download, so why does anyone still pay for an API? Traced from first principles: a model is a frozen file, memory bandwidth sets the floor, the cache needs an exact match from token one — and the leverage is one layer up from where everyone looks.">
-  <meta property="og:title" content="The 756-Gigabyte Question">
+  <meta property="og:title" content="Everything You Need to Know About Self-Deploying AI Models">
   <meta property="og:description" content="The models are free now — so why does anyone still pay for an API?">
   <meta property="og:type" content="article">
   <link rel="stylesheet" href="../assets/style.css">
@@ -27,7 +27,7 @@
 <main>
 <article class="wrap">
   <div class="kicker">Inference Economics</div>
-  <h1>The 756-Gigabyte Question</h1>
+  <h1>Everything You Need to Know About Self-Deploying AI Models</h1>
   <p class="subtitle">The models are free now — so why does anyone still pay for an API?</p>
   <p class="meta">September 2026 · ~13 min read</p>
 
@@ -52,7 +52,7 @@
     <div class="stat"><div class="n">74×</div><div class="l">between 1 user and 100</div></div>
   </div>
 
-  <h2 class="sec"><span class="tick" style="background:var(--warm)"></span>A model is a file</h2>
+  <h2 class="sec"><span class="tick" style="background:var(--warm)"></span><span class="num">1</span>The model as a file</h2>
 
   <p>Start with the least glamorous fact in artificial intelligence.</p>
 
@@ -73,11 +73,11 @@
   <p>Hold onto that, because it is the most expensive fact in this piece. On every one of those 500 trips the machine has to read the model. All of it. And the reading, not the thinking, is where the money goes.</p>
 
   <figure>
-    <img src="../assets/756-the-bill.png" alt="The Bill — $200 paid against $6,727 of capacity at list price, a 33.6× subsidy; the model as one frozen 756 GB file of 753 billion numbers; and the generation loop, where output becomes input and the sequence grows by one every pass.">
+    <img src="../assets/self-deploy-the-bill.png" alt="The Bill — $200 paid against $6,727 of capacity at list price, a 33.6× subsidy; the model as one frozen 756 GB file of 753 billion numbers; and the generation loop, where output becomes input and the sequence grows by one every pass.">
     <figcaption>What one month of usage actually cost, and the two facts everything else rests on.</figcaption>
   </figure>
 
-  <h2 class="sec"><span class="tick" style="background:var(--blue)"></span>The librarian's walk</h2>
+  <h2 class="sec"><span class="tick" style="background:var(--blue)"></span><span class="num">2</span>The memory bandwidth floor</h2>
 
   <p>To produce one word, the GPU has to read the model's weights. Not some of them — for a dense model, all of them. Every word, every time.</p>
 
@@ -95,7 +95,7 @@
 
   <p>That is the model producing one word.</p>
 
-  <h2 class="sec"><span class="tick" style="background:var(--green)"></span>The crowd on the walk</h2>
+  <h2 class="sec"><span class="tick" style="background:var(--green)"></span><span class="num">3</span>The economics of concurrency</h2>
 
   <p>Now the pivot the entire industry turns on. Somebody asks the librarian a second question while he is already walking.</p>
 
@@ -123,11 +123,11 @@
   <blockquote><p>Sparsity is a low-concurrency advantage: fast for one person, progressively less special as the machine fills up. Exactly backwards from what a deployment needs.</p></blockquote>
 
   <figure>
-    <img src="../assets/756-the-librarian.png" alt="The Librarian — 140 GB divided by 3.35 TB/s gives 42 ms per word while the compute units sit over 99% idle; cost per million words falling 74× from one user to a hundred; and the mixture-of-experts escape closing from 3% to 87% of experts read as concurrency rises.">
+    <img src="../assets/self-deploy-the-librarian.png" alt="The Librarian — 140 GB divided by 3.35 TB/s gives 42 ms per word while the compute units sit over 99% idle; cost per million words falling 74× from one user to a hundred; and the mixture-of-experts escape closing from 3% to 87% of experts read as concurrency rises.">
     <figcaption>The floor is set by memory, not compute — and it is shared by everyone on the walk.</figcaption>
   </figure>
 
-  <h2 class="sec"><span class="tick" style="background:var(--warm)"></span>The cache, exactly</h2>
+  <h2 class="sec"><span class="tick" style="background:var(--warm)"></span><span class="num">4</span>The prefix cache and its failure mode</h2>
 
   <p>The model does not remember your last message. The file never changes, so the software resends the whole conversation from the beginning every time. By turn 20 you are re-sending a block of text that has already been processed nineteen times.</p>
 
@@ -172,11 +172,11 @@
   <p>At 64 concurrent users the weights are read once for the whole batch, 40 GB; the conversations are read per user, 399 GB. That is the memory wall in its final form — the conversations now cost ten times more to read than the model does.</p>
 
   <figure>
-    <img src="../assets/756-the-cache.png" alt="The Cache — two users whose prompts diverge at position 9, inside the first 16-token block, so the fingerprint chain breaks and User 2 gets zero tokens free instead of the 16 a divergence at position 17 would have saved; and at 64 users, 40 GB of weights read against 399 GB of conversations.">
+    <img src="../assets/self-deploy-the-cache.png" alt="The Cache — two users whose prompts diverge at position 9, inside the first 16-token block, so the fingerprint chain breaks and User 2 gets zero tokens free instead of the 16 a divergence at position 17 would have saved; and at 64 users, 40 GB of weights read against 399 GB of conversations.">
     <figcaption>One different word at position 9 forfeits every identical token after it.</figcaption>
   </figure>
 
-  <h2 class="sec"><span class="tick" style="background:var(--blue)"></span>The arithmetic</h2>
+  <h2 class="sec"><span class="tick" style="background:var(--blue)"></span><span class="num">5</span>The cost of a node</h2>
 
   <p>Now the numbers. Eight H200s cost about $25,638 a month from a specialist GPU cloud — and the same GPU costs between $1.38 and $12.29 an hour depending purely on who you buy it from. <strong>A 9× spread on an identical part.</strong> Before anyone spends three months optimizing code, spend three days on procurement.</p>
 
@@ -251,13 +251,13 @@
   <p>So the answer to the question I opened with is no.</p>
 
   <figure>
-    <img src="../assets/756-the-arithmetic.png" alt="The Arithmetic — the measured sweep showing every configuration cheaper than the API waiting 78 to 251 seconds for the first word; cache hit rate moving cost per developer from $914 at 45% to $86 at 97.75%; and self-hosted GLM-5.2 at $508 landing level with Claude Haiku at $487.">
+    <img src="../assets/self-deploy-the-arithmetic.png" alt="The Arithmetic — the measured sweep showing every configuration cheaper than the API waiting 78 to 251 seconds for the first word; cache hit rate moving cost per developer from $914 at 45% to $86 at 97.75%; and self-hosted GLM-5.2 at $508 landing level with Claude Haiku at $487.">
     <figcaption>Fast, cheap, usable — pick two. And one unmeasured number moves the whole thing 10×.</figcaption>
   </figure>
 
-  <h2 class="sec"><span class="tick" style="background:var(--green)"></span>The number nobody has measured</h2>
+  <h2 class="sec"><span class="tick" style="background:var(--green)"></span><span class="num">6</span>The limits of the estimate</h2>
 
-  <p>Before going further I have to be honest about the figure the arithmetic leans on hardest, because the argument is load-bearing on it.</p>
+  <p>Before going further I have to be honest about the figure that cost estimate leans on hardest, because the argument is load-bearing on it.</p>
 
   <p>Nobody has ever published a cache hit-rate measurement for a coding agent running against self-hosted open-source serving software. After the source code, the papers, the issue trackers and every setup guide I could find: it does not exist. The closest evidence is SGLang's production figures on a similar mechanism — 52.4% and 74.1% over a month of traffic. My own measured rate, on a managed API rather than a self-hosted node, is 97.75%.</p>
 
@@ -267,7 +267,7 @@
 
   <p>One more boundary. GLM-5.2's claim to 87% of Opus's quality comes from the vendor's own benchmarks, which is why the comparison above leans on price rather than on that claim. The harness section, further down, explains why I do not trust benchmarks in this area at all — that one included.</p>
 
-  <h2 class="sec"><span class="tick" style="background:var(--warm)"></span>Why the API is cheap anyway</h2>
+  <h2 class="sec"><span class="tick" style="background:var(--warm)"></span><span class="num">7</span>The economics of the managed API</h2>
 
   <p>Back to where this started. How does anybody sell a $200 subscription to someone burning $6,727 of capacity?</p>
 
@@ -279,7 +279,7 @@
 
   <p>And falling prices will not save you. Cheaper tokens do not reduce spend; they unlock new workloads faster than the price falls. Economists call it Jevons paradox. <strong>Your invoice calls it Tuesday.</strong></p>
 
-  <h2 class="sec"><span class="tick" style="background:var(--blue)"></span>The harness</h2>
+  <h2 class="sec"><span class="tick" style="background:var(--blue)"></span><span class="num">8</span>The harness as the real variable</h2>
 
   <p>So if self-hosting does not pay, where is the opening? Not renting GPUs. Not undercutting $0.14-per-million Chinese APIs. Not building a serving engine — vLLM and SGLang are mature, free and well funded.</p>
 
@@ -298,11 +298,11 @@
   <p>Which means every vendor benchmark you have ever read is measuring somebody's harness. The model is in there somewhere, underneath a variable three times larger that nobody reports.</p>
 
   <figure>
-    <img src="../assets/756-the-harness.png" alt="The Harness — changing the model moves 8.4 points while changing the harness moves 22; a 5.5× spread on the invoice between a well-built and a badly-built harness; 197 tokens in per token out on agentic coding; and one unsorted tool list at position 1 costing 56,370 cached tokens per session.">
+    <img src="../assets/self-deploy-the-harness.png" alt="The Harness — changing the model moves 8.4 points while changing the harness moves 22; a 5.5× spread on the invoice between a well-built and a badly-built harness; 197 tokens in per token out on agentic coding; and one unsorted tool list at position 1 costing 56,370 cached tokens per session.">
     <figcaption>The wrapper moves more than the model does — and it is invisible in every benchmark that exists.</figcaption>
   </figure>
 
-  <h2 class="sec"><span class="tick" style="background:var(--green)"></span>What I would actually do</h2>
+  <h2 class="sec"><span class="tick" style="background:var(--green)"></span><span class="num">9</span>Recommendation</h2>
 
   <p><strong>Self-host for sovereignty, never for savings.</strong> If the data cannot leave the country then the arithmetic stops mattering and you build the node. That is the one honest case, and it is a good one.</p>
 
